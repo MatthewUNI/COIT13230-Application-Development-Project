@@ -1,1 +1,39 @@
- 
+ @startuml
+skinparam style strictuml
+actor User
+participant "Android UI" as UI
+participant "Meal Plan\nGenerator" as AI_Gen
+participant "Local Database\n(Room/SQLite)" as DB
+participant "GenAI API\n(External)" as LLM
+
+User -> UI: Request Weekly Meal Plan
+activate UI
+
+UI -> AI_Gen: generateMealPlan(userId)
+activate AI_Gen
+
+AI_Gen -> DB: fetchProfileConstraints(userId)
+activate DB
+DB --> AI_Gen: return (DietaryReqs, AvailableIngredients)
+deactivate DB
+
+note right of AI_Gen: Construct strict JSON prompt\nenforcing user constraints\n(e.g., Vegan, use Available Ingredients)
+
+AI_Gen -> LLM: HTTP POST /v1/models/gemini-1.5:generateContent
+activate LLM
+LLM --> AI_Gen: return Raw JSON Response
+deactivate LLM
+
+note right of AI_Gen: Parse and validate JSON structure.\nCatch JSONDecodeError if hallucinated.
+
+AI_Gen -> DB: saveGeneratedMealPlan(json_data)
+activate DB
+DB --> AI_Gen: confirm save
+deactivate DB
+
+AI_Gen --> UI: return formatted MealPlan Object
+deactivate AI_Gen
+
+UI --> User: Display Weekly Meal Plan
+deactivate UI
+@enduml
