@@ -6,6 +6,21 @@ import au.edu.cqu.ai_basedsmartmealplanner.model.GroceryList
 class GroceryListGenerator {
 
     fun generateGroceryList(items: List<GroceryItem>): GroceryList {
-        return GroceryList(items = items)
+
+        val combinedItems = items
+            .groupBy { "${it.name.lowercase()}|${it.unit.lowercase()}" }
+            .map { (_, groupedItems) ->
+                val firstItem = groupedItems.first()
+
+                GroceryItem(
+                    name = firstItem.name,
+                    quantity = groupedItems.sumOf { it.quantity },
+                    unit = firstItem.unit,
+                    category = firstItem.category,
+                    isPurchased = false
+                )
+            }
+
+        return GroceryList(items = combinedItems)
     }
 }
