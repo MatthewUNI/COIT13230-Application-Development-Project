@@ -1,6 +1,71 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <TextView
+            android:id="@+id/textWelcome"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="WELCOME, USER"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="24dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="DAILY NUTRITION"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginBottom="12dp" />
+
+        <TextView
+            android:id="@+id/textNoNutrition"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="No nutrition information available."
+            android:textAlignment="center"
+            android:padding="16dp"
+            android:layout_marginBottom="24dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="TODAY'S MEALS"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginBottom="12dp" />
+
+        <TextView
+            android:id="@+id/textNoMeals"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="No meals planned for today."
+            android:textAlignment="center"
+            android:padding="16dp"
+            android:layout_marginBottom="20dp" />
+
+        <Button
+            android:id="@+id/buttonViewMealPlan"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="View Meal Plan"
+            android:layout_marginBottom="12dp" />
+
+        <Button
+            android:id="@+id/buttonViewGroceryList"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="View Grocery List" />
+
+    </LinearLayout>
+</ScrollView>
