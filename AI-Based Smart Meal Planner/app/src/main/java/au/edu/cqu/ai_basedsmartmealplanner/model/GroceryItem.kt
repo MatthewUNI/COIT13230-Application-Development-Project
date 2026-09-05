@@ -1,9 +1,9 @@
 package au.edu.cqu.ai_basedsmartmealplanner.model
 
-data class FoodItem(
-    val foodItemId: Int,
+data class GroceryItem(
     val name: String,
     val quantity: Double,
     val unit: String,
-    val afcdFoodId: String?
+    val category: String,
+    val isPurchased: Boolean = false
 )
