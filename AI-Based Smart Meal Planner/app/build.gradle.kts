@@ -1,3 +1,12 @@
+import java.util.Properties
+
+val localProperties = Properties()
+val localPropertiesFile = rootProject.file("local.properties")
+if (localPropertiesFile.exists()) {
+    localProperties.load(localPropertiesFile.inputStream())
+}
+val apiKey = localProperties.getProperty("GEMINI_API_KEY") ?: ""
+
 plugins {
     alias(libs.plugins.android.application)
 }
@@ -7,6 +16,7 @@ android {
     compileSdk = 36
 
     defaultConfig {
+        buildConfigField("String", "GEMINI_API_KEY", "\"$apiKey\"")
         applicationId = "au.edu.cqu.ai_basedsmartmealplanner"
         minSdk = 23
         targetSdk = 36
@@ -31,10 +41,6 @@ android {
         targetCompatibility = JavaVersion.VERSION_11
     }
 
-    kotlinOptions {
-        jvmTarget = "11"
-    }
-
     buildFeatures {
         buildConfig = true
     }
@@ -44,7 +50,7 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
-    implementation(libs.androidx.activity)
+    implementation(libs.androidx.activity.ktx)
     implementation(libs.androidx.constraintlayout)
 
     // Navigation components
