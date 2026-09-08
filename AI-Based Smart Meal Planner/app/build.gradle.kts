@@ -9,8 +9,6 @@ val apiKey = localProperties.getProperty("GEMINI_API_KEY") ?: ""
 
 plugins {
     alias(libs.plugins.android.application)
-    alias(libs.plugins.ksp)
-
 }
 
 android {
@@ -60,10 +58,6 @@ dependencies {
     implementation(libs.androidx.navigation.ui.ktx)
 
     // Retrofit, Gson, and Coroutines for Gemini API pipeline
-    implementation(libs.androidx.room.runtime)
-    implementation(libs.androidx.room.ktx)
-    ksp(libs.androidx.room.compiler)
-
     implementation(libs.retrofit)
     implementation(libs.retrofit.converter.gson)
     implementation(libs.kotlinx.coroutines.android)
