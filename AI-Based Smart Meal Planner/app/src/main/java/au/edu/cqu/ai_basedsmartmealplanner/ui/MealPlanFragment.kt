@@ -14,6 +14,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import au.edu.cqu.ai_basedsmartmealplanner.R
 import au.edu.cqu.ai_basedsmartmealplanner.ai.MealPlannerViewModel
 import au.edu.cqu.ai_basedsmartmealplanner.ai.MealUiState
+import au.edu.cqu.ai_basedsmartmealplanner.profile.UserProfileManager
 import kotlinx.coroutines.launch
 
 class MealPlanFragment : Fragment(R.layout.fragment_meal_plan) {
@@ -41,10 +42,13 @@ class MealPlanFragment : Fragment(R.layout.fragment_meal_plan) {
         val textMealPlanInstructions =
             view.findViewById<TextView>(R.id.textMealPlanInstructions)
 
-        // Temporary ingredients for testing Farhad's meal generation
+
         buttonGenerateMealPlan.setOnClickListener {
+
+            val profile = UserProfileManager.getProfile()
+
             viewModel.generateMealPlan(
-                listOf("rice", "beans", "tomato")
+                profile.availableIngredients
             )
         }
 

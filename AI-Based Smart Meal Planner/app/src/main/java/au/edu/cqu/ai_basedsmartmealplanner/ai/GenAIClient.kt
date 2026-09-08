@@ -12,7 +12,7 @@ import kotlinx.coroutines.withContext
 // Defining the POST request to the external AI service
 interface GenAIApiService {
     @retrofit2.http.Headers("Content-Type: application/json")
-    @retrofit2.http.POST("v1beta/models/gemini-3.6-flash:generateContent")
+    @retrofit2.http.POST("v1beta/models/gemini-3.5-flash-lite:generateContent")
     suspend fun generateContent(
         @retrofit2.http.Query("key") apiKey: String,
         @retrofit2.http.Body request: Any
