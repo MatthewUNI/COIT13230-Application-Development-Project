@@ -1,29 +1,37 @@
 import java.util.Properties
 
-val localProperties = Properties()
-val localPropertiesFile = rootProject.file("local.properties")
-if (localPropertiesFile.exists()) {
-    localProperties.load(localPropertiesFile.inputStream())
-}
-val apiKey = localProperties.getProperty("GEMINI_API_KEY") ?: ""
-
 plugins {
     alias(libs.plugins.android.application)
 }
+
+val localProperties = Properties()
+val localPropertiesFile = rootProject.file("local.properties")
+
+if (localPropertiesFile.exists()) {
+    localProperties.load(localPropertiesFile.inputStream())
+}
+
+val apiKey = localProperties.getProperty("GEMINI_API_KEY") ?: ""
 
 android {
     namespace = "au.edu.cqu.ai_basedsmartmealplanner"
     compileSdk = 36
 
     defaultConfig {
-        buildConfigField("String", "GEMINI_API_KEY", "\"$apiKey\"")
         applicationId = "au.edu.cqu.ai_basedsmartmealplanner"
         minSdk = 23
         targetSdk = 36
         versionCode = 1
         versionName = "1.0"
 
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        buildConfigField(
+            "String",
+            "GEMINI_API_KEY",
+            "\"$apiKey\""
+        )
+
+        testInstrumentationRunner =
+            "androidx.test.runner.AndroidJUnitRunner"
     }
 
     buildTypes {
@@ -53,16 +61,13 @@ dependencies {
     implementation(libs.androidx.activity.ktx)
     implementation(libs.androidx.constraintlayout)
 
-    // Navigation components
     implementation(libs.androidx.navigation.fragment.ktx)
     implementation(libs.androidx.navigation.ui.ktx)
 
-    // Retrofit, Gson, and Coroutines for Gemini API pipeline
     implementation(libs.retrofit)
     implementation(libs.retrofit.converter.gson)
     implementation(libs.kotlinx.coroutines.android)
 
-    // Unit and Instrumentation Testing
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
