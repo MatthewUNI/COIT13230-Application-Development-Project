@@ -36,4 +36,28 @@ class GroceryListGeneratorTest {
         assertEquals("Dairy", result.items[0].category)
         assertFalse(result.items[0].isPurchased)
     }
+
+    @Test
+    fun generateGroceryList_keepsDifferentUnitsSeparate() {
+        val generator = GroceryListGenerator()
+
+        val items = listOf(
+            GroceryItem(
+                name = "Milk",
+                quantity = 1.0,
+                unit = "L",
+                category = "Dairy"
+            ),
+            GroceryItem(
+                name = "Milk",
+                quantity = 500.0,
+                unit = "mL",
+                category = "Dairy"
+            )
+        )
+
+        val result = generator.generateGroceryList(items)
+
+        assertEquals(2, result.items.size)
+    }
 }
