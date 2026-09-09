@@ -60,4 +60,13 @@ class GroceryListGeneratorTest {
 
         assertEquals(2, result.items.size)
     }
+
+    @Test
+    fun generateGroceryList_emptyInputReturnsEmptyList() {
+        val generator = GroceryListGenerator()
+
+        val result = generator.generateGroceryList(emptyList())
+
+        assertEquals(0, result.items.size)
+    }
 }
