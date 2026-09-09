@@ -58,4 +58,30 @@ class GroceryItemDaoTest {
         assertEquals("Dairy", savedItems[0].category)
         assertEquals(false, savedItems[0].isPurchased)
     }
+    @Test
+    fun updateGroceryItem_marksItemAsPurchased() = runBlocking {
+        val item = GroceryItemEntity(
+            name = "Bread",
+            quantity = 1.0,
+            unit = "loaf",
+            category = "Bakery",
+            isPurchased = false
+        )
+
+        groceryItemDao.insert(item)
+
+        val savedItem = groceryItemDao.getAll().first()
+
+        val updatedItem = savedItem.copy(
+            isPurchased = true
+        )
+
+        groceryItemDao.update(updatedItem)
+
+        val updatedItems = groceryItemDao.getAll()
+
+        assertEquals(1, updatedItems.size)
+        assertEquals("Bread", updatedItems[0].name)
+        assertEquals(true, updatedItems[0].isPurchased)
+    }
 }
