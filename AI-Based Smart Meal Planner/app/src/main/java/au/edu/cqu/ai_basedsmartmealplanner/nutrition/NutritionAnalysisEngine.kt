@@ -2,8 +2,6 @@ package au.edu.cqu.ai_basedsmartmealplanner.nutrition
 
 import au.edu.cqu.ai_basedsmartmealplanner.model.NutritionInfo
 
-
-
 class NutritionAnalysisEngine {
 
     fun calculateTotalNutrition(items: List<NutritionInfo>): NutritionInfo {
@@ -16,5 +14,17 @@ class NutritionAnalysisEngine {
             sugarsG = items.sumOf { it.sugarsG },
             sodiumMg = items.sumOf { it.sodiumMg }
         )
+    }
+
+    fun calculateTotalNutritionFromAfcdIds(
+        afcdFoodIds: List<String>,
+        dataSource: AfcdNutritionDataSource
+    ): NutritionInfo {
+
+        val nutritionItems = afcdFoodIds.mapNotNull { afcdFoodId ->
+            dataSource.getNutritionByAfcdId(afcdFoodId)
+        }
+
+        return calculateTotalNutrition(nutritionItems)
     }
 }
