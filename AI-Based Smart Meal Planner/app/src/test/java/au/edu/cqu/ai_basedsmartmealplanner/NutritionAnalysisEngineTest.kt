@@ -43,4 +43,19 @@ class NutritionAnalysisEngineTest {
         assertEquals(150.0, result.sodiumMg, 0.001)
     }
 
+    @Test
+    fun calculateTotalNutrition_emptyListReturnsZeros() {
+        val engine = NutritionAnalysisEngine()
+
+        val result = engine.calculateTotalNutrition(emptyList())
+
+        assertEquals(0.0, result.energyKj, 0.001)
+        assertEquals(0.0, result.proteinG, 0.001)
+        assertEquals(0.0, result.carbohydratesG, 0.001)
+        assertEquals(0.0, result.fatG, 0.001)
+        assertEquals(0.0, result.fibreG, 0.001)
+        assertEquals(0.0, result.sugarsG, 0.001)
+        assertEquals(0.0, result.sodiumMg, 0.001)
+    }
+
 }
