@@ -1,7 +1,7 @@
 package au.edu.cqu.ai_basedsmartmealplanner.nutrition
 
 import au.edu.cqu.ai_basedsmartmealplanner.model.NutritionInfo
-
+import au.edu.cqu.ai_basedsmartmealplanner.model.FoodItem
 class NutritionAnalysisEngine {
 
     fun calculateTotalNutrition(items: List<NutritionInfo>): NutritionInfo {
@@ -26,5 +26,17 @@ class NutritionAnalysisEngine {
         }
 
         return calculateTotalNutrition(nutritionItems)
+    }
+
+    fun calculateTotalNutritionFromFoodItems(
+        foodItems: List<FoodItem>,
+        dataSource: AfcdNutritionDataSource
+    ): NutritionInfo {
+
+        val afcdFoodIds = foodItems.mapNotNull { foodItem ->
+            foodItem.afcdFoodId
+        }
+
+        return calculateTotalNutritionFromAfcdIds(afcdFoodIds, dataSource)
     }
 }
