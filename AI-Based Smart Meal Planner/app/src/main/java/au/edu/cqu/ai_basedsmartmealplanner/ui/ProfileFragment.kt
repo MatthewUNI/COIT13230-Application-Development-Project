@@ -15,8 +15,6 @@ import com.google.android.material.textfield.TextInputEditText
 
 class ProfileFragment : Fragment(R.layout.fragment_profile) {
 
-    private val profileManager = UserProfileManager()
-
     private val availableIngredients = mutableListOf<String>()
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -183,9 +181,9 @@ class ProfileFragment : Fragment(R.layout.fragment_profile) {
                 availableIngredients = availableIngredients.toList()
             )
 
-            if (profileManager.isProfileValid(profile)) {
+            if (UserProfileManager.isProfileValid(profile)) {
 
-                profileManager.updateProfile(profile)
+                UserProfileManager.updateProfile(profile)
 
                 Toast.makeText(
                     requireContext(),

@@ -14,7 +14,11 @@ import java.util.concurrent.TimeUnit
 // Defining the POST request to the external AI service
 interface GenAIApiService {
     @retrofit2.http.Headers("Content-Type: application/json")
+<<<<<<< HEAD
     @retrofit2.http.POST("v1beta/models/gemini-3.5-flash:generateContent")
+=======
+    @retrofit2.http.POST("v1beta/models/gemini-3.5-flash-lite:generateContent")
+>>>>>>> origin/main
     suspend fun generateContent(
         @retrofit2.http.Query("key") apiKey: String,
         @retrofit2.http.Body request: Any

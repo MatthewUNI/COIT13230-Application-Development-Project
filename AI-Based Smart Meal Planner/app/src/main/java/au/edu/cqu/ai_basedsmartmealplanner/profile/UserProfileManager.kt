@@ -2,7 +2,7 @@ package au.edu.cqu.ai_basedsmartmealplanner.profile
 
 import au.edu.cqu.ai_basedsmartmealplanner.model.UserProfile
 
-class UserProfileManager {
+object UserProfileManager {
 
     private var userProfile = UserProfile()
 
