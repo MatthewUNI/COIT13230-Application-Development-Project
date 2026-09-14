@@ -9,8 +9,8 @@ val apiKey = localProperties.getProperty("GEMINI_API_KEY") ?: ""
 
 plugins {
     alias(libs.plugins.android.application)
+    alias(libs.plugins.ksp)
 }
-
 android {
     namespace = "au.edu.cqu.ai_basedsmartmealplanner"
     compileSdk = 36
@@ -52,6 +52,11 @@ dependencies {
     implementation(libs.material)
     implementation(libs.androidx.activity.ktx)
     implementation(libs.androidx.constraintlayout)
+
+    val roomVersion = "2.8.4"
+    implementation("androidx.room:room-runtime:$roomVersion")
+    implementation("androidx.room:room-ktx:$roomVersion")
+    ksp("androidx.room:room-compiler:$roomVersion")
 
     // Navigation components
     implementation(libs.androidx.navigation.fragment.ktx)
