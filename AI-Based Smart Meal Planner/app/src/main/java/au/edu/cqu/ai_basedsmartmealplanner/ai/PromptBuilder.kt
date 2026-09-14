@@ -15,6 +15,23 @@ object PromptBuilder {
         """.trimIndent()
     }
 
+    fun buildRecipePrompt(
+        recipeName: String,
+        dietaryRequirements: List<String>,
+        availableIngredients: List<String>
+    ): String {
+        val constraints = dietaryRequirements.joinToString(", ")
+        val inventory = availableIngredients.joinToString(", ")
+
+        return """
+        Provide a detailed recipe for "$recipeName".
+        Strictly adhere to the following dietary restrictions: $constraints.
+        Prioritize using available ingredients: $inventory.
+        If a required ingredient is not available, suggest a suitable dietary-compliant substitute.
+        Respond ONLY with a valid JSON object matching the Recipe schema (title, ingredients, instructions, totalCalories). No conversational filler.
+    """.trimIndent()
+    }
+
     fun buildIngredientSubstitutionPrompt(missingIngredient: String, inventory: List<String>): String {
         return """
             The user needs a substitute for $missingIngredient.
