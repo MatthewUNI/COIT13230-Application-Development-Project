@@ -7,51 +7,88 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import au.edu.cqu.ai_basedsmartmealplanner.R
+import au.edu.cqu.ai_basedsmartmealplanner.adapter.SavedPlansAdapter
 import au.edu.cqu.ai_basedsmartmealplanner.ai.MealPlannerViewModel
 import au.edu.cqu.ai_basedsmartmealplanner.ai.MealUiState
-import au.edu.cqu.ai_basedsmartmealplanner.profile.UserProfileManager
 import kotlinx.coroutines.launch
 
 class MealPlanFragment : Fragment(R.layout.fragment_meal_plan) {
 
-    private val viewModel: MealPlannerViewModel by viewModels()
+    private lateinit var viewModel: MealPlannerViewModel
+    private lateinit var savedPlansAdapter: SavedPlansAdapter
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        val buttonGenerateMealPlan =
+        viewModel =
+            ViewModelProvider(requireActivity())[MealPlannerViewModel::class.java]
+
+        val btnGenerate =
             view.findViewById<Button>(R.id.buttonGenerateMealPlan)
 
-        val textNoMealPlan =
+        val btnSave =
+            view.findViewById<Button>(R.id.buttonSavePlan)
+
+        val tvNoPlan =
             view.findViewById<TextView>(R.id.textNoMealPlan)
 
-        val mealPlanContainer =
+        val mealContainer =
             view.findViewById<LinearLayout>(R.id.mealPlanContainer)
 
-        val textMealPlanTitle =
-            view.findViewById<TextView>(R.id.textMealPlanTitle)
+        val rvSavedPlans =
+            view.findViewById<RecyclerView>(R.id.recyclerViewSavedPlans)
 
-        val textMealPlanIngredients =
-            view.findViewById<TextView>(R.id.textMealPlanIngredients)
+        // Set up saved meal plan history
+        savedPlansAdapter = SavedPlansAdapter { selectedPlan ->
+            viewModel.restoreSavedPlan(selectedPlan)
 
-        val textMealPlanInstructions =
-            view.findViewById<TextView>(R.id.textMealPlanInstructions)
-
-
-        buttonGenerateMealPlan.setOnClickListener {
-
-            val profile = UserProfileManager.getProfile()
-
-            viewModel.generateMealPlan(
-                profile.availableIngredients
-            )
+            Toast.makeText(
+                requireContext(),
+                "Loaded: ${selectedPlan.title}",
+                Toast.LENGTH_SHORT
+            ).show()
         }
 
+        rvSavedPlans.layoutManager =
+            LinearLayoutManager(requireContext())
+
+        rvSavedPlans.adapter = savedPlansAdapter
+
+        // Generate a meal plan using the user's current profile.
+        // The ViewModel automatically reads available ingredients
+        // and dietary requirements.
+        btnGenerate.setOnClickListener {
+            viewModel.generateMealPlan()
+        }
+
+        // Save current generated plan to Room
+        btnSave.setOnClickListener {
+            viewModel.saveCurrentMealPlan()
+
+            Toast.makeText(
+                requireContext(),
+                "Meal plan saved to history!",
+                Toast.LENGTH_SHORT
+            ).show()
+        }
+
+        // Observe saved plans
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.savedPlans.collect { plans ->
+                    savedPlansAdapter.submitList(plans)
+                }
+            }
+        }
+
+        // Observe meal-plan generation state
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
 
@@ -60,48 +97,95 @@ class MealPlanFragment : Fragment(R.layout.fragment_meal_plan) {
                     when (state) {
 
                         is MealUiState.Idle -> {
-                            // Initial screen
+                            tvNoPlan.visibility = View.VISIBLE
+                            tvNoPlan.text = "No meal plan generated yet."
+
+                            mealContainer.visibility = View.GONE
+                            btnSave.visibility = View.GONE
+                            btnGenerate.isEnabled = true
                         }
 
                         is MealUiState.Loading -> {
-                            Toast.makeText(
-                                requireContext(),
-                                "Generating meal plan...",
-                                Toast.LENGTH_SHORT
-                            ).show()
+                            tvNoPlan.visibility = View.VISIBLE
+                            tvNoPlan.text =
+                                "Generating your personalized meal plan..."
+
+                            mealContainer.visibility = View.GONE
+                            btnSave.visibility = View.GONE
+                            btnGenerate.isEnabled = false
                         }
 
                         is MealUiState.Success -> {
-                            val mealPlan = state.mealPlan
 
-                            textNoMealPlan.visibility = View.GONE
-                            mealPlanContainer.visibility = View.VISIBLE
+                            tvNoPlan.visibility = View.GONE
+                            mealContainer.visibility = View.VISIBLE
+                            btnSave.visibility = View.VISIBLE
+                            btnGenerate.isEnabled = true
 
-                            textMealPlanTitle.text =
-                                mealPlan.title
+                            mealContainer.removeAllViews()
 
-                            textMealPlanIngredients.text =
-                                "Ingredients\n" +
-                                        mealPlan.ingredients.joinToString("\n") {
-                                            "• $it"
+                            val meals = state.mealPlan.dailyMeals
+
+                            val planText = buildString {
+
+                                appendLine(
+                                    "Personalized Meal Plan (${meals.size} meals)"
+                                )
+
+                                appendLine()
+
+                                meals.forEachIndexed { index, meal ->
+
+                                    appendLine(
+                                        "${index + 1}. ${meal.title}"
+                                    )
+
+                                    if (meal.ingredients.isNotEmpty()) {
+                                        appendLine("Ingredients:")
+
+                                        meal.ingredients.forEach {
+                                            appendLine("• $it")
                                         }
+                                    }
 
-                            textMealPlanInstructions.text =
-                                "Instructions\n" +
-                                        mealPlan.instructions
-                                            .mapIndexed { index, instruction ->
-                                                "${index + 1}. $instruction"
-                                            }
-                                            .joinToString("\n")
+                                    if (meal.instructions.isNotEmpty()) {
+                                        appendLine("Instructions:")
 
-                            Toast.makeText(
-                                requireContext(),
-                                "Meal plan generated",
-                                Toast.LENGTH_SHORT
-                            ).show()
+                                        meal.instructions.forEachIndexed {
+                                                instructionIndex,
+                                                instruction ->
+
+                                            appendLine(
+                                                "${instructionIndex + 1}. $instruction"
+                                            )
+                                        }
+                                    }
+
+                                    appendLine()
+                                }
+                            }
+
+                            val mealPlanTextView =
+                                TextView(requireContext()).apply {
+
+                                    text = planText
+                                    textSize = 15f
+                                    setPadding(8, 8, 8, 8)
+                                }
+
+                            mealContainer.addView(mealPlanTextView)
                         }
 
                         is MealUiState.Error -> {
+
+                            tvNoPlan.visibility = View.VISIBLE
+                            tvNoPlan.text =
+                                "Error: ${state.message}"
+
+                            mealContainer.visibility = View.GONE
+                            btnSave.visibility = View.GONE
+                            btnGenerate.isEnabled = true
+
                             Toast.makeText(
                                 requireContext(),
                                 state.message,

@@ -1,87 +1,69 @@
 package au.edu.cqu.ai_basedsmartmealplanner
 
+import au.edu.cqu.ai_basedsmartmealplanner.model.FoodItem
 import au.edu.cqu.ai_basedsmartmealplanner.model.NutritionInfo
+import au.edu.cqu.ai_basedsmartmealplanner.nutrition.AfcdNutritionDataSource
 import au.edu.cqu.ai_basedsmartmealplanner.nutrition.NutritionAnalysisEngine
 import org.junit.Assert.assertEquals
 import org.junit.Test
-import au.edu.cqu.ai_basedsmartmealplanner.nutrition.AfcdNutritionDataSource
-import au.edu.cqu.ai_basedsmartmealplanner.model.FoodItem
 
 class NutritionAnalysisEngineTest {
 
     @Test
     fun calculateTotalNutrition_addsValuesCorrectly() {
-        val engine = NutritionAnalysisEngine()
+        val engine = NutritionAnalysisEngine
 
         val items = listOf(
             NutritionInfo(
-                energyKj = 500.0,
-                proteinG = 10.0,
-                carbohydratesG = 20.0,
-                fatG = 5.0,
-                fibreG = 3.0,
-                sugarsG = 4.0,
-                sodiumMg = 100.0
+                calories = 500,
+                protein = 10.0,
+                carbs = 20.0,
+                fats = 5.0
             ),
             NutritionInfo(
-                energyKj = 300.0,
-                proteinG = 5.0,
-                carbohydratesG = 15.0,
-                fatG = 2.0,
-                fibreG = 2.0,
-                sugarsG = 3.0,
-                sodiumMg = 50.0
+                calories = 300,
+                protein = 5.0,
+                carbs = 15.0,
+                fats = 2.0
             )
         )
 
         val result = engine.calculateTotalNutrition(items)
 
-        assertEquals(800.0, result.energyKj, 0.001)
-        assertEquals(15.0, result.proteinG, 0.001)
-        assertEquals(35.0, result.carbohydratesG, 0.001)
-        assertEquals(7.0, result.fatG, 0.001)
-        assertEquals(5.0, result.fibreG, 0.001)
-        assertEquals(7.0, result.sugarsG, 0.001)
-        assertEquals(150.0, result.sodiumMg, 0.001)
+        assertEquals(800, result.calories)
+        assertEquals(15.0, result.protein, 0.001)
+        assertEquals(35.0, result.carbs, 0.001)
+        assertEquals(7.0, result.fats, 0.001)
     }
 
     @Test
     fun calculateTotalNutrition_emptyListReturnsZeros() {
-        val engine = NutritionAnalysisEngine()
+        val engine = NutritionAnalysisEngine
 
         val result = engine.calculateTotalNutrition(emptyList())
 
-        assertEquals(0.0, result.energyKj, 0.001)
-        assertEquals(0.0, result.proteinG, 0.001)
-        assertEquals(0.0, result.carbohydratesG, 0.001)
-        assertEquals(0.0, result.fatG, 0.001)
-        assertEquals(0.0, result.fibreG, 0.001)
-        assertEquals(0.0, result.sugarsG, 0.001)
-        assertEquals(0.0, result.sodiumMg, 0.001)
+        assertEquals(0, result.calories)
+        assertEquals(0.0, result.protein, 0.001)
+        assertEquals(0.0, result.carbs, 0.001)
+        assertEquals(0.0, result.fats, 0.001)
     }
 
     @Test
     fun calculateTotalNutritionFromAfcdIds_totalsKnownIds() {
-        val engine = NutritionAnalysisEngine()
+        val engine = NutritionAnalysisEngine
 
         val firstNutrition = NutritionInfo(
-            energyKj = 400.0,
-            proteinG = 8.0,
-            carbohydratesG = 18.0,
-            fatG = 4.0,
-            fibreG = 2.0,
-            sugarsG = 5.0,
-            sodiumMg = 90.0
+            calories = 400,
+            protein = 8.0,
+            carbs = 18.0,
+            fats = 4.0
         )
 
         val secondNutrition = NutritionInfo(
-            energyKj = 250.0,
-            proteinG = 6.0,
-            carbohydratesG = 12.0,
-            fatG = 3.0,
-            fibreG = 1.0,
-            sugarsG = 2.0,
-            sodiumMg = 60.0
+            calories = 250,
+            protein = 6.0,
+            carbs = 12.0,
+            fats = 3.0
         )
 
         val dataSource = AfcdNutritionDataSource(
@@ -96,27 +78,21 @@ class NutritionAnalysisEngineTest {
             dataSource
         )
 
-        assertEquals(650.0, result.energyKj, 0.001)
-        assertEquals(14.0, result.proteinG, 0.001)
-        assertEquals(30.0, result.carbohydratesG, 0.001)
-        assertEquals(7.0, result.fatG, 0.001)
-        assertEquals(3.0, result.fibreG, 0.001)
-        assertEquals(7.0, result.sugarsG, 0.001)
-        assertEquals(150.0, result.sodiumMg, 0.001)
+        assertEquals(650, result.calories)
+        assertEquals(14.0, result.protein, 0.001)
+        assertEquals(30.0, result.carbs, 0.001)
+        assertEquals(7.0, result.fats, 0.001)
     }
 
     @Test
     fun calculateTotalNutritionFromFoodItems_usesAfcdIdsFromFoodItems() {
-        val engine = NutritionAnalysisEngine()
+        val engine = NutritionAnalysisEngine
 
         val nutritionInfo = NutritionInfo(
-            energyKj = 300.0,
-            proteinG = 7.0,
-            carbohydratesG = 15.0,
-            fatG = 2.0,
-            fibreG = 3.0,
-            sugarsG = 4.0,
-            sodiumMg = 70.0
+            calories = 300,
+            protein = 7.0,
+            carbs = 15.0,
+            fats = 2.0
         )
 
         val dataSource = AfcdNutritionDataSource(
@@ -145,13 +121,9 @@ class NutritionAnalysisEngineTest {
             dataSource
         )
 
-        assertEquals(300.0, result.energyKj, 0.001)
-        assertEquals(7.0, result.proteinG, 0.001)
-        assertEquals(15.0, result.carbohydratesG, 0.001)
-        assertEquals(2.0, result.fatG, 0.001)
-        assertEquals(3.0, result.fibreG, 0.001)
-        assertEquals(4.0, result.sugarsG, 0.001)
-        assertEquals(70.0, result.sodiumMg, 0.001)
+        assertEquals(300, result.calories)
+        assertEquals(7.0, result.protein, 0.001)
+        assertEquals(15.0, result.carbs, 0.001)
+        assertEquals(2.0, result.fats, 0.001)
     }
-
 }

@@ -1,10 +1,10 @@
 package au.edu.cqu.ai_basedsmartmealplanner
 
+import au.edu.cqu.ai_basedsmartmealplanner.model.NutritionInfo
 import au.edu.cqu.ai_basedsmartmealplanner.nutrition.AfcdNutritionDataSource
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
-import au.edu.cqu.ai_basedsmartmealplanner.model.NutritionInfo
-import org.junit.Assert.assertEquals
 
 class AfcdNutritionDataSourceTest {
 
@@ -16,16 +16,14 @@ class AfcdNutritionDataSourceTest {
 
         assertNull(result)
     }
+
     @Test
     fun getNutritionByAfcdId_knownIdReturnsNutritionInfo() {
         val nutritionInfo = NutritionInfo(
-            energyKj = 450.0,
-            proteinG = 5.0,
-            carbohydratesG = 20.0,
-            fatG = 3.0,
-            fibreG = 4.0,
-            sugarsG = 6.0,
-            sodiumMg = 80.0
+            calories = 450,
+            protein = 5.0,
+            carbs = 20.0,
+            fats = 3.0
         )
 
         val dataSource = AfcdNutritionDataSource(
