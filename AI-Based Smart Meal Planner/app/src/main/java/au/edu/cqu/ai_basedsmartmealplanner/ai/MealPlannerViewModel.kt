@@ -23,7 +23,7 @@ class MealPlannerViewModel(
     application: Application
 ) : AndroidViewModel(application) {
 
-    val profileManager: UserProfileManager = UserProfileManager()
+    val profileManager: UserProfileManager = UserProfileManager
 
     private val db = AppDatabase.getDatabase(application)
     private val mealPlanDao = db.mealPlanDao()

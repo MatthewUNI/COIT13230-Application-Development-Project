@@ -11,9 +11,6 @@ import androidx.room.Query
 import androidx.room.Room
 import androidx.room.RoomDatabase
 
-/**
- * Entity representing saved meal plans in local storage.
- */
 @Entity(tableName = "saved_meal_plans")
 data class SavedMealPlanEntity(
     @PrimaryKey(autoGenerate = true) val id: Int = 0,
@@ -22,11 +19,9 @@ data class SavedMealPlanEntity(
     val timestamp: Long = System.currentTimeMillis()
 )
 
-/**
- * Data Access Object (DAO) for reading and writing meal plans.
- */
 @Dao
 interface MealPlanDao {
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insertMealPlan(plan: SavedMealPlanEntity): Long
 
@@ -37,25 +32,39 @@ interface MealPlanDao {
     fun clearAll(): Int
 }
 
-/**
- * Room Database definition for application data storage[cite: 1].
- */
-@Database(entities = [SavedMealPlanEntity::class], version = 1, exportSchema = false)
+@Database(
+    entities = [
+        FoodItemEntity::class,
+        GroceryItemEntity::class,
+        SavedMealPlanEntity::class
+    ],
+    version = 3,
+    exportSchema = false
+)
 abstract class AppDatabase : RoomDatabase() {
+
+    abstract fun foodItemDao(): FoodItemDao
+
+    abstract fun groceryItemDao(): GroceryItemDao
 
     abstract fun mealPlanDao(): MealPlanDao
 
     companion object {
+
         @Volatile
         private var INSTANCE: AppDatabase? = null
 
         fun getDatabase(context: Context): AppDatabase {
             return INSTANCE ?: synchronized(this) {
+
                 val instance = Room.databaseBuilder(
                     context.applicationContext,
                     AppDatabase::class.java,
-                    "smart_meal_planner_db"
-                ).build()
+                    "smart_meal_planner_database"
+                )
+                    .fallbackToDestructiveMigration()
+                    .build()
+
                 INSTANCE = instance
                 instance
             }

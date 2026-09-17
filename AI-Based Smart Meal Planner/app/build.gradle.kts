@@ -1,22 +1,24 @@
 import java.util.Properties
 
-val localProperties = Properties()
-val localPropertiesFile = rootProject.file("local.properties")
-if (localPropertiesFile.exists()) {
-    localProperties.load(localPropertiesFile.inputStream())
-}
-val apiKey = localProperties.getProperty("GEMINI_API_KEY") ?: ""
-
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.ksp)
 }
+
+val localProperties = Properties()
+val localPropertiesFile = rootProject.file("local.properties")
+
+if (localPropertiesFile.exists()) {
+    localProperties.load(localPropertiesFile.inputStream())
+}
+
+val apiKey = localProperties.getProperty("GEMINI_API_KEY") ?: ""
+
 android {
     namespace = "au.edu.cqu.ai_basedsmartmealplanner"
     compileSdk = 36
 
     defaultConfig {
-        buildConfigField("String", "GEMINI_API_KEY", "\"$apiKey\"")
         applicationId = "au.edu.cqu.ai_basedsmartmealplanner"
         minSdk = 23
         targetSdk = 36
@@ -54,27 +56,28 @@ android {
 }
 
 dependencies {
+    // Room database
+    implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.room.ktx)
+    ksp(libs.androidx.room.compiler)
+
+    // Android
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
     implementation(libs.androidx.activity.ktx)
     implementation(libs.androidx.constraintlayout)
 
-    val roomVersion = "2.8.4"
-    implementation("androidx.room:room-runtime:$roomVersion")
-    implementation("androidx.room:room-ktx:$roomVersion")
-    ksp("androidx.room:room-compiler:$roomVersion")
-
     // Navigation components
     implementation(libs.androidx.navigation.fragment.ktx)
     implementation(libs.androidx.navigation.ui.ktx)
 
-    // Retrofit, Gson, and Coroutines for Gemini API pipeline
+    // Retrofit, Gson and Coroutines for Gemini API
     implementation(libs.retrofit)
     implementation(libs.retrofit.converter.gson)
     implementation(libs.kotlinx.coroutines.android)
 
-    // Unit and Instrumentation Testing
+    // Unit and instrumentation testing
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
