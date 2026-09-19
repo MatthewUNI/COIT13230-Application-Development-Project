@@ -243,4 +243,17 @@ class MealPlannerViewModel(
             )
         }
     }
+    fun updateGroceryItemPurchased(itemName: String, isPurchased: Boolean) {
+        val currentList = _groceryList.value ?: return
+
+        val updatedItems = currentList.items.map { item ->
+            if (item.name == itemName) {
+                item.copy(isPurchased = isPurchased)
+            } else {
+                item
+            }
+        }
+
+        _groceryList.value = currentList.copy(items = updatedItems)
+    }
 }

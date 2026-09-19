@@ -64,6 +64,12 @@ class GroceryListFragment : Fragment(R.layout.fragment_grocery_list) {
                                 textSize = 16f
                                 isChecked = item.isPurchased
                                 setPadding(16, 12, 16, 12)
+                                setOnCheckedChangeListener { _, isChecked ->
+                                    viewModel.updateGroceryItemPurchased(
+                                        itemName = item.name,
+                                        isPurchased = isChecked
+                                    )
+                                }
                             }
                             groceryContainer.addView(checkBox)
                         }
