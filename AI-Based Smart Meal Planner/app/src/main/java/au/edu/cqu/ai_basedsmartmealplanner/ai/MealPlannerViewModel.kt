@@ -180,13 +180,18 @@ class MealPlannerViewModel(
                         _uiState.value = MealUiState.Error("Received empty response from AI.")
                     }
                 } else {
-                    val errorMsg = when (response.code()) {
-                        429 -> "Rate limit reached. Please wait a moment."
-                        503 -> "AI service temporarily unavailable. Please retry."
-                        else -> "API Error: ${response.code()}"
-                    }
-                    _uiState.value = MealUiState.Error(errorMsg)
-                }
+
+
+            val errorMsg = when (response.code()) {
+                400 -> "Invalid AI request."
+                403 -> "Gemini API access denied. Check API key/model permissions."
+                429 -> "Rate limit reached. Please wait a moment."
+                503 -> "AI service temporarily unavailable. Please retry."
+                else -> "API Error: ${response.code()}"
+            }
+
+            _uiState.value = MealUiState.Error(errorMsg)
+        }
             } catch (e: Exception) {
                 _uiState.value = MealUiState.Error(e.localizedMessage ?: "Unknown network error")
             }
