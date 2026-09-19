@@ -20,6 +20,8 @@ class ProfileFragment : Fragment(R.layout.fragment_profile) {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        UserProfileManager.initialize(requireContext())
+
         val radioGroupGoal = view.findViewById<RadioGroup>(R.id.radioGroupGoal)
 
         val editCurrentWeight =
@@ -183,7 +185,7 @@ class ProfileFragment : Fragment(R.layout.fragment_profile) {
 
             if (UserProfileManager.isProfileValid(profile)) {
 
-                UserProfileManager.updateProfile(profile)
+                UserProfileManager.updateProfile(requireContext(), profile)
 
                 Toast.makeText(
                     requireContext(),
@@ -200,6 +202,34 @@ class ProfileFragment : Fragment(R.layout.fragment_profile) {
                 ).show()
             }
         }
+
+        // Load the current saved profile back into the UI
+        val savedProfile = UserProfileManager.getProfile()
+
+        when (savedProfile.goalType) {
+            "Lose" -> radioGroupGoal.check(R.id.radioLose)
+            "Maintain" -> radioGroupGoal.check(R.id.radioMaintain)
+            "Gain" -> radioGroupGoal.check(R.id.radioGain)
+        }
+
+        if (savedProfile.currentWeight > 0) {
+            editCurrentWeight.setText(savedProfile.currentWeight.toString())
+        }
+
+        if (savedProfile.targetWeight > 0) {
+            editTargetWeight.setText(savedProfile.targetWeight.toString())
+        }
+
+        editDietaryRequirements.setText(
+            savedProfile.dietaryRequirements.joinToString(", ")
+        )
+
+        editFoodPreferences.setText(
+            savedProfile.foodPreferences.joinToString(", ")
+        )
+
+        availableIngredients.clear()
+        availableIngredients.addAll(savedProfile.availableIngredients)
 
         updateIngredientDisplay()
     }

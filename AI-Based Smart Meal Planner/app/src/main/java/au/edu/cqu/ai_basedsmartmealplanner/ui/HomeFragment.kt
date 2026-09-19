@@ -58,6 +58,15 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         val textDinner =
             view.findViewById<TextView>(R.id.textDinner)
 
+        val buttonViewBreakfast =
+            view.findViewById<Button>(R.id.buttonViewBreakfast)
+
+        val buttonViewLunch =
+            view.findViewById<Button>(R.id.buttonViewLunch)
+
+        val buttonViewDinner =
+            view.findViewById<Button>(R.id.buttonViewDinner)
+
         val buttonViewMealPlan =
             view.findViewById<Button>(R.id.buttonViewMealPlan)
 
@@ -130,6 +139,56 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
             }
         }
 
+        buttonViewBreakfast.setOnClickListener {
+
+            val state = viewModel.uiState.value
+
+            if (state is MealUiState.Success) {
+                state.mealPlan.dailyMeals.getOrNull(0)?.let { meal ->
+
+                    parentFragmentManager.beginTransaction()
+                        .replace(
+                            R.id.fragmentContainer,
+                            RecipesFragment.newInstance(meal.title)
+                        )
+                        .commit()
+                }
+            }
+        }
+
+        buttonViewLunch.setOnClickListener {
+
+            val state = viewModel.uiState.value
+
+            if (state is MealUiState.Success) {
+                state.mealPlan.dailyMeals.getOrNull(1)?.let { meal ->
+
+                    parentFragmentManager.beginTransaction()
+                        .replace(
+                            R.id.fragmentContainer,
+                            RecipesFragment.newInstance(meal.title)
+                        )
+                        .commit()
+                }
+            }
+        }
+
+        buttonViewDinner.setOnClickListener {
+
+            val state = viewModel.uiState.value
+
+            if (state is MealUiState.Success) {
+                state.mealPlan.dailyMeals.getOrNull(2)?.let { meal ->
+
+                    parentFragmentManager.beginTransaction()
+                        .replace(
+                            R.id.fragmentContainer,
+                            RecipesFragment.newInstance(meal.title)
+                        )
+                        .commit()
+                }
+            }
+        }
         buttonViewMealPlan.setOnClickListener {
             parentFragmentManager.beginTransaction()
                 .replace(R.id.fragmentContainer, MealPlanFragment())
