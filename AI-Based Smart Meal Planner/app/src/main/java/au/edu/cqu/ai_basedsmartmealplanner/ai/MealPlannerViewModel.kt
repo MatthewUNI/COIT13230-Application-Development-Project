@@ -137,30 +137,53 @@ class MealPlannerViewModel(
                         "responseSchema" to mapOf(
                             "type" to "OBJECT",
                             "properties" to mapOf(
-                                "dailyMeals" to mapOf(
+                                "plan_id" to mapOf(
+                                    "type" to "STRING"
+                                ),
+                                "daily_meals" to mapOf(
                                     "type" to "ARRAY",
                                     "items" to mapOf(
                                         "type" to "OBJECT",
                                         "properties" to mapOf(
-                                            "title" to mapOf("type" to "STRING"),
+                                            "recipe_id" to mapOf(
+                                                "type" to "STRING"
+                                            ),
+                                            "title" to mapOf(
+                                                "type" to "STRING"
+                                            ),
                                             "ingredients" to mapOf(
                                                 "type" to "ARRAY",
-                                                "items" to mapOf("type" to "STRING")
+                                                "items" to mapOf(
+                                                    "type" to "STRING"
+                                                )
                                             ),
                                             "instructions" to mapOf(
                                                 "type" to "ARRAY",
-                                                "items" to mapOf("type" to "STRING")
+                                                "items" to mapOf(
+                                                    "type" to "STRING"
+                                                )
+                                            ),
+                                            "total_calories" to mapOf(
+                                                "type" to "INTEGER"
                                             )
                                         ),
-                                        "required" to listOf("title", "ingredients", "instructions")
+                                        "required" to listOf(
+                                            "recipe_id",
+                                            "title",
+                                            "ingredients",
+                                            "instructions",
+                                            "total_calories"
+                                        )
                                     )
                                 )
                             ),
-                            "required" to listOf("dailyMeals")
+                            "required" to listOf(
+                                "plan_id",
+                                "daily_meals"
+                            )
                         )
                     )
                 )
-
                 val response = GenAIClient.apiService.generateContent(
                     apiKey = BuildConfig.GEMINI_API_KEY,
                     request = requestPayload
