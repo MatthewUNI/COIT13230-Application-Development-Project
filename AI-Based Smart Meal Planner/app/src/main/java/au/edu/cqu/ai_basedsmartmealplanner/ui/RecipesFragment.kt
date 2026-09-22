@@ -2,141 +2,220 @@ package au.edu.cqu.ai_basedsmartmealplanner.ui
 
 import android.os.Bundle
 import android.view.View
-import android.widget.Button
+import android.widget.LinearLayout
 import android.widget.TextView
-import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import au.edu.cqu.ai_basedsmartmealplanner.R
-import au.edu.cqu.ai_basedsmartmealplanner.ai.RecipeGenerator
-import au.edu.cqu.ai_basedsmartmealplanner.profile.UserProfileManager
+import au.edu.cqu.ai_basedsmartmealplanner.ai.MealPlannerViewModel
+import au.edu.cqu.ai_basedsmartmealplanner.ai.MealUiState
+import au.edu.cqu.ai_basedsmartmealplanner.nutrition.NutritionAnalysisEngine
 import kotlinx.coroutines.launch
+import java.util.Locale
 
 class RecipesFragment : Fragment(R.layout.fragment_recipes) {
 
-    private var selectedRecipeName: String? = null
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-
-        selectedRecipeName = arguments?.getString(ARG_RECIPE_NAME)
-    }
+    private lateinit var viewModel: MealPlannerViewModel
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        UserProfileManager.initialize(requireContext())
+        viewModel =
+            ViewModelProvider(requireActivity())[MealPlannerViewModel::class.java]
 
         val textNoRecipe =
             view.findViewById<TextView>(R.id.textNoRecipe)
 
-        val recipeContainer =
-            view.findViewById<View>(R.id.recipeContainer)
+        val recipeListContainer =
+            view.findViewById<LinearLayout>(R.id.recipeListContainer)
 
-        val textRecipeTitle =
-            view.findViewById<TextView>(R.id.textRecipeTitle)
+        viewLifecycleOwner.lifecycleScope.launch {
 
-        val textRecipeCalories =
-            view.findViewById<TextView>(R.id.textRecipeCalories)
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
 
-        val textRecipeIngredients =
-            view.findViewById<TextView>(R.id.textRecipeIngredients)
+                viewModel.uiState.collect { state ->
 
-        val textRecipeInstructions =
-            view.findViewById<TextView>(R.id.textRecipeInstructions)
+                    when (state) {
 
-        val buttonGenerateRecipe =
-            view.findViewById<Button>(R.id.buttonGenerateRecipe)
+                        is MealUiState.Success -> {
 
-        selectedRecipeName?.let { recipeName ->
-            textNoRecipe.text = "Selected meal: $recipeName"
-        }
+                            val recipes = state.mealPlan.dailyMeals
 
-        buttonGenerateRecipe.setOnClickListener {
+                            if (recipes.isEmpty()) {
 
-            val recipeName = selectedRecipeName
+                                textNoRecipe.visibility = View.VISIBLE
+                                textNoRecipe.text =
+                                    "No recipes available. Generate a meal plan first."
 
-            if (recipeName.isNullOrBlank()) {
-                Toast.makeText(
-                    requireContext(),
-                    "Please select a meal from the Home screen first.",
-                    Toast.LENGTH_SHORT
-                ).show()
+                                recipeListContainer.visibility = View.GONE
 
-                return@setOnClickListener
-            }
+                            } else {
 
-            val profile = UserProfileManager.getProfile()
+                                textNoRecipe.visibility = View.GONE
+                                recipeListContainer.visibility = View.VISIBLE
 
-            buttonGenerateRecipe.isEnabled = false
-            buttonGenerateRecipe.text = "Generating..."
+                                recipeListContainer.removeAllViews()
 
-            viewLifecycleOwner.lifecycleScope.launch {
+                                val days = listOf(
+                                    "Monday",
+                                    "Tuesday",
+                                    "Wednesday",
+                                    "Thursday",
+                                    "Friday",
+                                    "Saturday",
+                                    "Sunday"
+                                )
 
-                try {
-                    val recipe = RecipeGenerator.requestRecipeDetails(
-                        recipeName = recipeName,
-                        dietaryRequirements = profile.dietaryRequirements,
-                        availableIngredients = profile.availableIngredients
-                    )
+                                days.forEach { day ->
 
-                    if (recipe != null) {
+                                    val dayRecipes = recipes.filter { recipe ->
+                                        recipe.day.equals(
+                                            day,
+                                            ignoreCase = true
+                                        )
+                                    }
 
-                        textNoRecipe.visibility = View.GONE
-                        recipeContainer.visibility = View.VISIBLE
+                                    if (dayRecipes.isNotEmpty()) {
 
-                        textRecipeTitle.text = recipe.title
+                                        // Day heading
+                                        val dayHeading =
+                                            TextView(requireContext()).apply {
 
-                        textRecipeCalories.text =
-                            "Calories: ${recipe.totalCalories}"
+                                                text = day
+                                                textSize = 20f
 
-                        textRecipeIngredients.text =
-                            recipe.ingredients.joinToString("\n") {
-                                "• $it"
-                            }
+                                                setPadding(
+                                                    4,
+                                                    20,
+                                                    4,
+                                                    12
+                                                )
 
-                        textRecipeInstructions.text =
-                            recipe.instructions
-                                .mapIndexed { index, instruction ->
-                                    "${index + 1}. $instruction"
+                                                setTypeface(
+                                                    null,
+                                                    android.graphics.Typeface.BOLD
+                                                )
+                                            }
+
+                                        recipeListContainer.addView(dayHeading)
+
+                                        dayRecipes.forEach { recipe ->
+
+                                            // Inflate dropdown layout
+                                            val recipeView =
+                                                layoutInflater.inflate(
+                                                    R.layout.item_recipe_dropdown,
+                                                    recipeListContainer,
+                                                    false
+                                                )
+
+                                            val textRecipeHeader =
+                                                recipeView.findViewById<TextView>(
+                                                    R.id.textRecipeHeader
+                                                )
+
+                                            val recipeDetailsContainer =
+                                                recipeView.findViewById<LinearLayout>(
+                                                    R.id.recipeDetailsContainer
+                                                )
+
+                                            val textRecipeCalories =
+                                                recipeView.findViewById<TextView>(
+                                                    R.id.textRecipeCalories
+                                                )
+
+                                            val textRecipeMacros =
+                                                recipeView.findViewById<TextView>(
+                                                    R.id.textRecipeMacros
+                                                )
+
+                                            val textRecipeIngredients =
+                                                recipeView.findViewById<TextView>(
+                                                    R.id.textRecipeIngredients
+                                                )
+
+                                            val textRecipeInstructions =
+                                                recipeView.findViewById<TextView>(
+                                                    R.id.textRecipeInstructions
+                                                )
+
+                                            // Calculate nutrition for this recipe
+                                            val nutrition =
+                                                NutritionAnalysisEngine.analyzeRecipe(
+                                                    recipe
+                                                )
+
+                                            // Set recipe information
+                                            textRecipeHeader.text =
+                                                "▼ ${recipe.mealType} - ${recipe.title}"
+
+                                            textRecipeCalories.text =
+                                                "Calories: ${nutrition.calories}"
+
+                                            textRecipeMacros.text =
+                                                String.format(
+                                                    Locale.ENGLISH,
+                                                    "Protein: %.1fg | Carbs: %.1fg | Fats: %.1fg",
+                                                    nutrition.protein,
+                                                    nutrition.carbs,
+                                                    nutrition.fats
+                                                )
+
+                                            textRecipeIngredients.text =
+                                                recipe.ingredients.joinToString("\n") {
+                                                    "• $it"
+                                                }
+
+                                            textRecipeInstructions.text =
+                                                recipe.instructions
+                                                    .mapIndexed { index, instruction ->
+                                                        "${index + 1}. $instruction"
+                                                    }
+                                                    .joinToString("\n")
+
+                                            // Expand/collapse recipe
+                                            textRecipeHeader.setOnClickListener {
+
+                                                if (
+                                                    recipeDetailsContainer.visibility ==
+                                                    View.GONE
+                                                ) {
+
+                                                    recipeDetailsContainer.visibility =
+                                                        View.VISIBLE
+
+                                                    textRecipeHeader.text =
+                                                        "▲ ${recipe.mealType} - ${recipe.title}"
+
+                                                } else {
+
+                                                    recipeDetailsContainer.visibility =
+                                                        View.GONE
+
+                                                    textRecipeHeader.text =
+                                                        "▼ ${recipe.mealType} - ${recipe.title}"
+                                                }
+                                            }
+
+                                            recipeListContainer.addView(recipeView)
+                                        }
+                                    }
                                 }
-                                .joinToString("\n")
+                            }
+                        }
 
-                    } else {
+                        else -> {
 
-                        Toast.makeText(
-                            requireContext(),
-                            "Unable to generate recipe.",
-                            Toast.LENGTH_SHORT
-                        ).show()
+                            textNoRecipe.visibility = View.VISIBLE
+                            textNoRecipe.text =
+                                "Generate a meal plan to view recipes."
+
+                            recipeListContainer.visibility = View.GONE
+                        }
                     }
-
-                } catch (e: Exception) {
-
-                    Toast.makeText(
-                        requireContext(),
-                        "Recipe generation failed: ${e.localizedMessage}",
-                        Toast.LENGTH_LONG
-                    ).show()
-
-                } finally {
-
-                    buttonGenerateRecipe.isEnabled = true
-                    buttonGenerateRecipe.text = "Generate Recipe"
-                }
-            }
-        }
-    }
-
-    companion object {
-
-        private const val ARG_RECIPE_NAME = "recipe_name"
-
-        fun newInstance(recipeName: String): RecipesFragment {
-
-            return RecipesFragment().apply {
-                arguments = Bundle().apply {
-                    putString(ARG_RECIPE_NAME, recipeName)
                 }
             }
         }

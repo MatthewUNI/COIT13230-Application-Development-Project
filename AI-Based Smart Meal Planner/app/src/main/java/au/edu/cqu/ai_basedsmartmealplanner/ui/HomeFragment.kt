@@ -13,6 +13,9 @@ import au.edu.cqu.ai_basedsmartmealplanner.R
 import au.edu.cqu.ai_basedsmartmealplanner.ai.MealPlannerViewModel
 import au.edu.cqu.ai_basedsmartmealplanner.ai.MealUiState
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 class HomeFragment : Fragment(R.layout.fragment_home) {
 
@@ -21,7 +24,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // Use the same shared ViewModel as the Meal Plan and Grocery List screens.
+        // Use the same shared ViewModel as the other screens.
         viewModel =
             ViewModelProvider(requireActivity())[MealPlannerViewModel::class.java]
 
@@ -75,8 +78,6 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
 
         /*
          * Observe nutrition calculated by MealPlannerViewModel.
-         * When a meal plan is generated or restored, the nutrition
-         * values are automatically displayed on the Home screen.
          */
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -106,8 +107,8 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         }
 
         /*
-         * Observe the current meal plan and display the first
-         * three meals as Breakfast, Lunch and Dinner.
+         * Observe the current meal plan and display today's
+         * Breakfast, Lunch and Dinner.
          */
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -118,17 +119,46 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
 
                         val meals = state.mealPlan.dailyMeals
 
+                        val today = SimpleDateFormat(
+                            "EEEE",
+                            Locale.ENGLISH
+                        ).format(Date())
+
+                        val breakfast = meals.find { meal ->
+                            meal.day.equals(today, ignoreCase = true) &&
+                                    meal.mealType.equals(
+                                        "Breakfast",
+                                        ignoreCase = true
+                                    )
+                        }
+
+                        val lunch = meals.find { meal ->
+                            meal.day.equals(today, ignoreCase = true) &&
+                                    meal.mealType.equals(
+                                        "Lunch",
+                                        ignoreCase = true
+                                    )
+                        }
+
+                        val dinner = meals.find { meal ->
+                            meal.day.equals(today, ignoreCase = true) &&
+                                    meal.mealType.equals(
+                                        "Dinner",
+                                        ignoreCase = true
+                                    )
+                        }
+
                         mealsContainer.visibility = View.VISIBLE
                         textNoMeals.visibility = View.GONE
 
                         textBreakfast.text =
-                            meals.getOrNull(0)?.title ?: "Meal not available"
+                            breakfast?.title ?: "Meal not available"
 
                         textLunch.text =
-                            meals.getOrNull(1)?.title ?: "Meal not available"
+                            lunch?.title ?: "Meal not available"
 
                         textDinner.text =
-                            meals.getOrNull(2)?.title ?: "Meal not available"
+                            dinner?.title ?: "Meal not available"
 
                     } else {
 
@@ -139,65 +169,53 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
             }
         }
 
+        /*
+         * Open the Recipes screen.
+         * RecipesFragment now reads recipes directly from the
+         * shared MealPlannerViewModel.
+         */
         buttonViewBreakfast.setOnClickListener {
-
-            val state = viewModel.uiState.value
-
-            if (state is MealUiState.Success) {
-                state.mealPlan.dailyMeals.getOrNull(0)?.let { meal ->
-
-                    parentFragmentManager.beginTransaction()
-                        .replace(
-                            R.id.fragmentContainer,
-                            RecipesFragment.newInstance(meal.title)
-                        )
-                        .commit()
-                }
-            }
+            parentFragmentManager.beginTransaction()
+                .replace(
+                    R.id.fragmentContainer,
+                    RecipesFragment()
+                )
+                .commit()
         }
 
         buttonViewLunch.setOnClickListener {
-
-            val state = viewModel.uiState.value
-
-            if (state is MealUiState.Success) {
-                state.mealPlan.dailyMeals.getOrNull(1)?.let { meal ->
-
-                    parentFragmentManager.beginTransaction()
-                        .replace(
-                            R.id.fragmentContainer,
-                            RecipesFragment.newInstance(meal.title)
-                        )
-                        .commit()
-                }
-            }
+            parentFragmentManager.beginTransaction()
+                .replace(
+                    R.id.fragmentContainer,
+                    RecipesFragment()
+                )
+                .commit()
         }
 
         buttonViewDinner.setOnClickListener {
-
-            val state = viewModel.uiState.value
-
-            if (state is MealUiState.Success) {
-                state.mealPlan.dailyMeals.getOrNull(2)?.let { meal ->
-
-                    parentFragmentManager.beginTransaction()
-                        .replace(
-                            R.id.fragmentContainer,
-                            RecipesFragment.newInstance(meal.title)
-                        )
-                        .commit()
-                }
-            }
+            parentFragmentManager.beginTransaction()
+                .replace(
+                    R.id.fragmentContainer,
+                    RecipesFragment()
+                )
+                .commit()
         }
+
         buttonViewMealPlan.setOnClickListener {
             parentFragmentManager.beginTransaction()
-                .replace(R.id.fragmentContainer, MealPlanFragment())
+                .replace(
+                    R.id.fragmentContainer,
+                    MealPlanFragment()
+                )
                 .commit()
         }
 
         buttonViewGroceryList.setOnClickListener {
             parentFragmentManager.beginTransaction()
-                .replace(R.id.fragmentContainer, GroceryListFragment())
+                .replace(
+                    R.id.fragmentContainer,
+                    GroceryListFragment()
+                )
                 .commit()
         }
     }

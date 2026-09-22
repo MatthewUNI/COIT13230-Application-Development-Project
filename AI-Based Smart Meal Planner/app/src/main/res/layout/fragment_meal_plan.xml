@@ -1,88 +1,75 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/screen_background"
-    android:orientation="vertical"
-    android:paddingStart="16dp"
-    android:paddingTop="32dp"
-    android:paddingEnd="16dp"
-    android:paddingBottom="16dp">
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center_horizontal"
-        android:layout_marginBottom="16dp"
-        android:text="MEAL PLAN"
-        android:textSize="20sp"
-        android:textStyle="bold" />
-
-    <Button
-        android:id="@+id/buttonGenerateMealPlan"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Generate Meal Plan" />
-
-    <Button
-        android:id="@+id/buttonSavePlan"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:text="Save Current Plan"
-        android:visibility="gone" />
-
-    <TextView
-        android:id="@+id/textNoMealPlan"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:layout_marginBottom="16dp"
-        android:text="No meal plan generated yet."
-        android:textAlignment="center" />
+    android:fillViewport="true">
 
     <LinearLayout
-        android:id="@+id/mealPlanContainer"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:visibility="gone"
-        android:layout_marginBottom="24dp">
+        android:paddingStart="16dp"
+        android:paddingTop="32dp"
+        android:paddingEnd="16dp"
+        android:paddingBottom="32dp">
 
         <TextView
-            android:id="@+id/textMealPlanTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginBottom="16dp"
+            android:text="MEAL PLAN"
+            android:textSize="20sp"
+            android:textStyle="bold" />
+
+        <Button
+            android:id="@+id/buttonGenerateMealPlan"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textSize="18sp"
-            android:textStyle="bold"
-            android:layout_marginBottom="12dp" />
+            android:text="Generate Meal Plan" />
 
-        <TextView
-            android:id="@+id/textMealPlanIngredients"
+        <Button
+            android:id="@+id/buttonSavePlan"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="12dp" />
+            android:layout_marginTop="8dp"
+            android:text="Save Current Plan"
+            android:visibility="gone" />
 
         <TextView
-            android:id="@+id/textMealPlanInstructions"
+            android:id="@+id/textNoMealPlan"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="16dp"
+            android:text="No meal plan generated yet."
+            android:textAlignment="center" />
+
+        <LinearLayout
+            android:id="@+id/mealPlanContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:orientation="vertical"
+            android:visibility="gone" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="8dp"
+            android:text="Saved Plans History"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recyclerViewSavedPlans"
+            android:layout_width="match_parent"
+            android:layout_height="300dp"
+            android:nestedScrollingEnabled="false" />
 
     </LinearLayout>
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:layout_marginBottom="8dp"
-        android:text="Saved Plans History"
-        android:textSize="16sp"
-        android:textStyle="bold" />
-
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/recyclerViewSavedPlans"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1" />
-
-</LinearLayout>
+</ScrollView>

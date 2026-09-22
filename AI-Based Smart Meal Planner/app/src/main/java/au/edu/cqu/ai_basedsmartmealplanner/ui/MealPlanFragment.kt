@@ -47,6 +47,7 @@ class MealPlanFragment : Fragment(R.layout.fragment_meal_plan) {
 
         // Set up saved meal plan history
         savedPlansAdapter = SavedPlansAdapter { selectedPlan ->
+
             viewModel.restoreSavedPlan(selectedPlan)
 
             Toast.makeText(
@@ -61,15 +62,14 @@ class MealPlanFragment : Fragment(R.layout.fragment_meal_plan) {
 
         rvSavedPlans.adapter = savedPlansAdapter
 
-        // Generate a meal plan using the user's current profile.
-        // The ViewModel automatically reads available ingredients
-        // and dietary requirements.
+        // Generate meal plan
         btnGenerate.setOnClickListener {
             viewModel.generateMealPlan()
         }
 
-        // Save current generated plan to Room
+        // Save current generated plan
         btnSave.setOnClickListener {
+
             viewModel.saveCurrentMealPlan()
 
             Toast.makeText(
@@ -81,15 +81,18 @@ class MealPlanFragment : Fragment(R.layout.fragment_meal_plan) {
 
         // Observe saved plans
         viewLifecycleOwner.lifecycleScope.launch {
+
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+
                 viewModel.savedPlans.collect { plans ->
                     savedPlansAdapter.submitList(plans)
                 }
             }
         }
 
-        // Observe meal-plan generation state
+        // Observe meal plan
         viewLifecycleOwner.lifecycleScope.launch {
+
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
 
                 viewModel.uiState.collect { state ->
@@ -97,6 +100,7 @@ class MealPlanFragment : Fragment(R.layout.fragment_meal_plan) {
                     when (state) {
 
                         is MealUiState.Idle -> {
+
                             tvNoPlan.visibility = View.VISIBLE
                             tvNoPlan.text = "No meal plan generated yet."
 
@@ -106,6 +110,7 @@ class MealPlanFragment : Fragment(R.layout.fragment_meal_plan) {
                         }
 
                         is MealUiState.Loading -> {
+
                             tvNoPlan.visibility = View.VISIBLE
                             tvNoPlan.text =
                                 "Generating your personalized meal plan..."
@@ -122,58 +127,98 @@ class MealPlanFragment : Fragment(R.layout.fragment_meal_plan) {
                             btnSave.visibility = View.VISIBLE
                             btnGenerate.isEnabled = true
 
+                            // Remove previous day views
                             mealContainer.removeAllViews()
 
                             val meals = state.mealPlan.dailyMeals
 
-                            val planText = buildString {
+                            val days = listOf(
+                                "Monday",
+                                "Tuesday",
+                                "Wednesday",
+                                "Thursday",
+                                "Friday",
+                                "Saturday",
+                                "Sunday"
+                            )
 
-                                appendLine(
-                                    "Personalized Meal Plan (${meals.size} meals)"
-                                )
+                            days.forEach { day ->
 
-                                appendLine()
-
-                                meals.forEachIndexed { index, meal ->
-
-                                    appendLine(
-                                        "${index + 1}. ${meal.title}"
+                                val dayMeals = meals.filter { meal ->
+                                    meal.day.equals(
+                                        day,
+                                        ignoreCase = true
                                     )
+                                }
 
-                                    if (meal.ingredients.isNotEmpty()) {
-                                        appendLine("Ingredients:")
+                                if (dayMeals.isNotEmpty()) {
 
-                                        meal.ingredients.forEach {
-                                            appendLine("• $it")
-                                        }
+                                    // Inflate the day card from XML
+                                    val dayView =
+                                        layoutInflater.inflate(
+                                            R.layout.item_day_meals,
+                                            mealContainer,
+                                            false
+                                        )
+
+                                    val textDay =
+                                        dayView.findViewById<TextView>(
+                                            R.id.textDay
+                                        )
+
+                                    val textBreakfast =
+                                        dayView.findViewById<TextView>(
+                                            R.id.textBreakfast
+                                        )
+
+                                    val textLunch =
+                                        dayView.findViewById<TextView>(
+                                            R.id.textLunch
+                                        )
+
+                                    val textDinner =
+                                        dayView.findViewById<TextView>(
+                                            R.id.textDinner
+                                        )
+
+                                    // Find each meal type
+                                    val breakfast = dayMeals.find { meal ->
+                                        meal.mealType.equals(
+                                            "Breakfast",
+                                            ignoreCase = true
+                                        )
                                     }
 
-                                    if (meal.instructions.isNotEmpty()) {
-                                        appendLine("Instructions:")
-
-                                        meal.instructions.forEachIndexed {
-                                                instructionIndex,
-                                                instruction ->
-
-                                            appendLine(
-                                                "${instructionIndex + 1}. $instruction"
-                                            )
-                                        }
+                                    val lunch = dayMeals.find { meal ->
+                                        meal.mealType.equals(
+                                            "Lunch",
+                                            ignoreCase = true
+                                        )
                                     }
 
-                                    appendLine()
+                                    val dinner = dayMeals.find { meal ->
+                                        meal.mealType.equals(
+                                            "Dinner",
+                                            ignoreCase = true
+                                        )
+                                    }
+
+                                    // Display generated meal data
+                                    textDay.text = day
+
+                                    textBreakfast.text =
+                                        "Breakfast - ${breakfast?.title ?: "Not available"}"
+
+                                    textLunch.text =
+                                        "Lunch - ${lunch?.title ?: "Not available"}"
+
+                                    textDinner.text =
+                                        "Dinner - ${dinner?.title ?: "Not available"}"
+
+                                    // Add completed day card
+                                    mealContainer.addView(dayView)
                                 }
                             }
-
-                            val mealPlanTextView =
-                                TextView(requireContext()).apply {
-
-                                    text = planText
-                                    textSize = 15f
-                                    setPadding(8, 8, 8, 8)
-                                }
-
-                            mealContainer.addView(mealPlanTextView)
                         }
 
                         is MealUiState.Error -> {

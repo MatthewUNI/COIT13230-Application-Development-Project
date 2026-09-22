@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="10dp"
+    android:background="@drawable/day_card_background"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <TextView
+        android:id="@+id/textRecipeHeader"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:clickable="true"
+        android:focusable="true"
+        android:paddingTop="4dp"
+        android:paddingBottom="4dp"
+        android:text="▼ Breakfast - Recipe"
+        android:textSize="16sp"
+        android:textStyle="bold" />
+
+    <LinearLayout
+        android:id="@+id/recipeDetailsContainer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:orientation="vertical"
+        android:visibility="gone">
+
+        <TextView
+            android:id="@+id/textRecipeCalories"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="4dp"
+            android:text="Calories: 0" />
+
+        <TextView
+            android:id="@+id/textRecipeMacros"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:text="Protein: 0.0g | Carbs: 0.0g | Fats: 0.0g" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="6dp"
+            android:text="Ingredients"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/textRecipeIngredients"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="6dp"
+            android:text="Instructions"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/textRecipeInstructions"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+
+    </LinearLayout>
+
+</LinearLayout>

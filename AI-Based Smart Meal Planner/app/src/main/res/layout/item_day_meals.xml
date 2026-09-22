@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="16dp"
+    android:background="@drawable/day_card_background"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <TextView
+        android:id="@+id/textDay"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp"
+        android:text="Monday"
+        android:textSize="20sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/textBreakfast"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingTop="6dp"
+        android:paddingBottom="6dp"
+        android:text="Breakfast - Meal"
+        android:textSize="16sp" />
+
+    <TextView
+        android:id="@+id/textLunch"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingTop="6dp"
+        android:paddingBottom="6dp"
+        android:text="Lunch - Meal"
+        android:textSize="16sp" />
+
+    <TextView
+        android:id="@+id/textDinner"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingTop="6dp"
+        android:paddingBottom="6dp"
+        android:text="Dinner - Meal"
+        android:textSize="16sp" />
+
+</LinearLayout>

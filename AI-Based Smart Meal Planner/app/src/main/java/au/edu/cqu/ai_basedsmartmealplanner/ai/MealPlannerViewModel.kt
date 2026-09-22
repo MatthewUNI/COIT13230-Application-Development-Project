@@ -18,6 +18,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 class MealPlannerViewModel(
     application: Application
@@ -44,6 +47,26 @@ class MealPlannerViewModel(
 
     init {
         loadSavedPlans()
+    }
+
+    private fun calculateTodayNutrition(mealPlan: MealPlan): NutritionInfo {
+
+        val today = SimpleDateFormat(
+            "EEEE",
+            Locale.ENGLISH
+        ).format(Date())
+
+        val todaysMeals = mealPlan.dailyMeals.filter { meal ->
+            meal.day.equals(today, ignoreCase = true)
+        }
+
+        val todaysMealPlan = mealPlan.copy(
+            dailyMeals = todaysMeals
+        )
+
+        return NutritionAnalysisEngine.analyzeDailyPlan(
+            todaysMealPlan
+        )
     }
 
     /**
@@ -94,7 +117,7 @@ class MealPlannerViewModel(
                 mealPlan = restoredPlan,
                 availableIngredients = currentProfile.availableIngredients
             )
-            _nutritionInfo.value = NutritionAnalysisEngine.analyzeDailyPlan(restoredPlan)
+            _nutritionInfo.value = calculateTodayNutrition(restoredPlan)
         } catch (e: Exception) {
             _uiState.value = MealUiState.Error("Failed to restore saved plan: ${e.localizedMessage}")
         }
@@ -124,52 +147,104 @@ class MealPlannerViewModel(
 
                 val promptText = """
                     You are a strict nutritional meal planner.
-                    Generate a meal plan $constraintText using available ingredients: $ingredientList.
+                    Generate a complete 7-day meal plan $constraintText using available ingredients: $ingredientList.
+                    
+                    Generate exactly 3 meals for each day:
+                    breakfast, lunch and dinner.
+                    
+                    Generate meals for:
+                    Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday.
+                    
+                    Each meal must include:
+                    - the day
+                    - the meal type
+                    - a meal title
+                    - ingredients
+                    - cooking instructions
+                    - total calories
+                    
                     Output strictly as a JSON object matching the required schema.
                 """.trimIndent()
 
                 val requestPayload = mapOf(
                     "contents" to listOf(
-                        mapOf("parts" to listOf(mapOf("text" to promptText)))
+                        mapOf(
+                            "parts" to listOf(
+                                mapOf("text" to promptText)
+                            )
+                        )
                     ),
                     "generationConfig" to mapOf(
                         "responseMimeType" to "application/json",
                         "responseSchema" to mapOf(
                             "type" to "OBJECT",
                             "properties" to mapOf(
+
                                 "plan_id" to mapOf(
                                     "type" to "STRING"
                                 ),
+
                                 "daily_meals" to mapOf(
                                     "type" to "ARRAY",
                                     "items" to mapOf(
                                         "type" to "OBJECT",
+
                                         "properties" to mapOf(
+
                                             "recipe_id" to mapOf(
                                                 "type" to "STRING"
                                             ),
+
                                             "title" to mapOf(
                                                 "type" to "STRING"
                                             ),
+
+                                            "day" to mapOf(
+                                                "type" to "STRING",
+                                                "enum" to listOf(
+                                                    "Monday",
+                                                    "Tuesday",
+                                                    "Wednesday",
+                                                    "Thursday",
+                                                    "Friday",
+                                                    "Saturday",
+                                                    "Sunday"
+                                                )
+                                            ),
+
+                                            "meal_type" to mapOf(
+                                                "type" to "STRING",
+                                                "enum" to listOf(
+                                                    "Breakfast",
+                                                    "Lunch",
+                                                    "Dinner"
+                                                )
+                                            ),
+
                                             "ingredients" to mapOf(
                                                 "type" to "ARRAY",
                                                 "items" to mapOf(
                                                     "type" to "STRING"
                                                 )
                                             ),
+
                                             "instructions" to mapOf(
                                                 "type" to "ARRAY",
                                                 "items" to mapOf(
                                                     "type" to "STRING"
                                                 )
                                             ),
+
                                             "total_calories" to mapOf(
                                                 "type" to "INTEGER"
                                             )
                                         ),
+
                                         "required" to listOf(
                                             "recipe_id",
                                             "title",
+                                            "day",
+                                            "meal_type",
                                             "ingredients",
                                             "instructions",
                                             "total_calories"
@@ -177,6 +252,7 @@ class MealPlannerViewModel(
                                     )
                                 )
                             ),
+
                             "required" to listOf(
                                 "plan_id",
                                 "daily_meals"
@@ -198,7 +274,7 @@ class MealPlannerViewModel(
                             mealPlan = parsedPlan,
                             availableIngredients = ingredients
                         )
-                        _nutritionInfo.value = NutritionAnalysisEngine.analyzeDailyPlan(parsedPlan)
+                        _nutritionInfo.value = calculateTodayNutrition(parsedPlan)
                     } else {
                         _uiState.value = MealUiState.Error("Received empty response from AI.")
                     }
