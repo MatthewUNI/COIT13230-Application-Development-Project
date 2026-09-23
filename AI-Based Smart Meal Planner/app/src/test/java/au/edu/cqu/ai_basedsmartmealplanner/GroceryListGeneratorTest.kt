@@ -13,6 +13,8 @@ class GroceryListGeneratorTest {
         val recipe = Recipe(
             recipeId = "1",
             title = "Breakfast",
+            day = "Monday",
+            mealType = "Breakfast",
             ingredients = listOf(
                 "Milk",
                 "Milk",
@@ -36,6 +38,8 @@ class GroceryListGeneratorTest {
         val recipe = Recipe(
             recipeId = "2",
             title = "Breakfast",
+            day = "Monday",
+            mealType = "Breakfast",
             ingredients = listOf(
                 "Milk",
                 "Banana",
@@ -60,6 +64,8 @@ class GroceryListGeneratorTest {
         val recipe = Recipe(
             recipeId = "3",
             title = "Empty Recipe",
+            day = "Monday",
+            mealType = "Breakfast",
             ingredients = emptyList(),
             instructions = emptyList(),
             totalCalories = 0
