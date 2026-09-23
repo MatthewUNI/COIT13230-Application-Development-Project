@@ -6,6 +6,8 @@ import androidx.lifecycle.viewModelScope
 import au.edu.cqu.ai_basedsmartmealplanner.BuildConfig
 import au.edu.cqu.ai_basedsmartmealplanner.database.AppDatabase
 import au.edu.cqu.ai_basedsmartmealplanner.database.SavedMealPlanEntity
+import au.edu.cqu.ai_basedsmartmealplanner.database.toEntity
+import au.edu.cqu.ai_basedsmartmealplanner.database.toGroceryItem
 import au.edu.cqu.ai_basedsmartmealplanner.grocery.GroceryListGenerator
 import au.edu.cqu.ai_basedsmartmealplanner.model.GroceryList
 import au.edu.cqu.ai_basedsmartmealplanner.model.MealPlan
@@ -31,6 +33,8 @@ class MealPlannerViewModel(
     private val db = AppDatabase.getDatabase(application)
     private val mealPlanDao = db.mealPlanDao()
 
+    private val groceryItemDao = db.groceryItemDao()
+
     private val _uiState = MutableStateFlow<MealUiState>(MealUiState.Idle)
     val uiState: StateFlow<MealUiState> = _uiState.asStateFlow()
 
@@ -47,6 +51,7 @@ class MealPlannerViewModel(
 
     init {
         loadSavedPlans()
+        loadSavedGroceryList()
     }
 
     private fun calculateTodayNutrition(mealPlan: MealPlan): NutritionInfo {
@@ -92,6 +97,17 @@ class MealPlannerViewModel(
     fun loadSavedPlans() {
         viewModelScope.launch(Dispatchers.IO) {
             _savedPlans.value = mealPlanDao.getAllSavedMealPlans()
+        }
+    }
+    private fun loadSavedGroceryList() {
+        viewModelScope.launch(Dispatchers.IO) {
+            val savedItems = groceryItemDao.getAll()
+
+            if (savedItems.isNotEmpty()) {
+                _groceryList.value = GroceryList(
+                    items = savedItems.map { it.toGroceryItem() }
+                )
+            }
         }
     }
 
@@ -309,14 +325,28 @@ class MealPlannerViewModel(
      * Generates or refreshes the grocery list based on the active meal plan
      * and the user's current inventory.
      */
+
+    private fun saveGroceryList(groceryList: GroceryList) {
+        viewModelScope.launch(Dispatchers.IO) {
+            groceryItemDao.clearAll()
+            groceryList.items.forEach { item ->
+                groceryItemDao.insert(item.toEntity())
+            }
+        }
+    }
     fun generateGroceryList() {
         val currentState = _uiState.value
+
         if (currentState is MealUiState.Success) {
             val currentProfile = profileManager.getProfile()
-            _groceryList.value = GroceryListGenerator.generateFromMealPlan(
+
+            val generatedList = GroceryListGenerator.generateFromMealPlan(
                 mealPlan = currentState.mealPlan,
                 availableIngredients = currentProfile.availableIngredients
             )
+
+            _groceryList.value = generatedList
+            saveGroceryList(generatedList)
         }
     }
     fun updateGroceryItemPurchased(itemName: String, isPurchased: Boolean) {
@@ -330,6 +360,19 @@ class MealPlannerViewModel(
             }
         }
 
-        _groceryList.value = currentList.copy(items = updatedItems)
+        val updatedList = currentList.copy(items = updatedItems)
+        _groceryList.value = updatedList
+
+        viewModelScope.launch(Dispatchers.IO) {
+            val savedItems = groceryItemDao.getAll()
+
+            savedItems
+                .filter { it.name.equals(itemName, ignoreCase = true) }
+                .forEach { entity ->
+                    groceryItemDao.update(
+                        entity.copy(isPurchased = isPurchased)
+                    )
+                }
+        }
     }
 }

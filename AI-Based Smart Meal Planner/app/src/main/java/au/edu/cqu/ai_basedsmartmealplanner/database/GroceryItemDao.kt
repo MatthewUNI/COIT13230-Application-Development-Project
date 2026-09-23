@@ -15,6 +15,9 @@ interface GroceryItemDao {
     @Query("SELECT * FROM grocery_items")
     suspend fun getAll(): List<GroceryItemEntity>
 
+    @Query("DELETE FROM grocery_items")
+    suspend fun clearAll()
+
     @Update
     suspend fun update(groceryItem: GroceryItemEntity)
 
