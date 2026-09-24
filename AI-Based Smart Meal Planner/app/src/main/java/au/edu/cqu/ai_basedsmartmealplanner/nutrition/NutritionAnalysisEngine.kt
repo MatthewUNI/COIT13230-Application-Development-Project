@@ -4,8 +4,16 @@ import au.edu.cqu.ai_basedsmartmealplanner.model.FoodItem
 import au.edu.cqu.ai_basedsmartmealplanner.model.MealPlan
 import au.edu.cqu.ai_basedsmartmealplanner.model.NutritionInfo
 import au.edu.cqu.ai_basedsmartmealplanner.model.Recipe
+import android.content.Context
 
 object NutritionAnalysisEngine {
+
+    private lateinit var afcdDataSource: AfcdNutritionDataSource
+
+    fun initialize(context: Context) {
+        afcdDataSource = AfcdNutritionDataSource()
+        afcdDataSource.loadFromAssets(context.applicationContext)
+    }
 
     private val ingredientNutritionTable = mapOf(
         "chicken" to NutritionInfo(calories = 165, protein = 31.0, carbs = 0.0, fats = 3.6),
@@ -29,27 +37,30 @@ object NutritionAnalysisEngine {
     }
 
     fun analyzeRecipe(recipe: Recipe): NutritionInfo {
-        var totalCalories = recipe.totalCalories ?: 0
+        val totalCalories = recipe.totalCalories
+
         var totalProtein = 0.0
         var totalCarbs = 0.0
         var totalFats = 0.0
 
         for (ingredient in recipe.ingredients) {
-            val lower = ingredient.lowercase()
 
-            val matchedNutrients =
-                ingredientNutritionTable.entries
-                    .firstOrNull { lower.contains(it.key) }
-                    ?.value
+            val matchedFood = if (::afcdDataSource.isInitialized) {
+                afcdDataSource.findFoodByIngredient(ingredient)
+            } else {
+                null
+            }
 
-            if (matchedNutrients != null) {
-                totalProtein += matchedNutrients.protein
-                totalCarbs += matchedNutrients.carbs
-                totalFats += matchedNutrients.fats
+            if (matchedFood != null) {
 
-                if (totalCalories == 0) {
-                    totalCalories += matchedNutrients.calories
-                }
+                val estimatedGrams =
+                    afcdDataSource.estimateIngredientGrams(ingredient)
+
+                val portionFactor = estimatedGrams / 100.0
+
+                totalProtein += matchedFood.protein * portionFactor
+                totalCarbs += matchedFood.carbs * portionFactor
+                totalFats += matchedFood.fats * portionFactor
             }
         }
 
