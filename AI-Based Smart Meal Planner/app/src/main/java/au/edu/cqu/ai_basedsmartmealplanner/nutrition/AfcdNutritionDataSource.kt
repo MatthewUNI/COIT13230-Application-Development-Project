@@ -33,266 +33,277 @@ class AfcdNutritionDataSource(
 
     fun findFoodByIngredient(ingredient: String): AfcdFoodRecord? {
 
-        val text = ingredient.lowercase()
+        var text = ingredient.lowercase().trim()
 
-        // Helper: return an exact verified AFCD record.
-        fun byId(foodKey: String): AfcdFoodRecord? {
-            return foodRecords.firstOrNull {
-                it.foodKey.equals(foodKey, ignoreCase = true)
+        // Convert common alternative food names into terminology
+        // more likely to be used by the Australian AFCD dataset.
+        text = text
+            .replace("ground beef", "beef mince")
+            .replace("ground turkey", "turkey mince")
+            .replace("ground chicken", "chicken mince")
+            .replace("ground pork", "pork mince")
+
+        if (foodRecords.isEmpty()) {
+            return null
+        }
+
+        // Remove quantities and measurement units from Gemini's ingredient text.
+        // Example:
+        // "300g chicken thighs" -> "chicken thighs"
+        // "2 cans tuna in oil" -> "tuna in oil"
+        // "30ml olive oil" -> "olive oil"
+        val cleanedIngredient = text
+            .replace(Regex("""\d+\s*/\s*\d+"""), " ")
+            .replace(Regex("""\d+(?:\.\d+)?"""), " ")
+            .replace(
+                Regex(
+                    """\b(g|gram|grams|kg|ml|millilitre|millilitres|milliliter|milliliters|""" +
+                            """cup|cups|tbsp|tablespoon|tablespoons|tsp|teaspoon|teaspoons|""" +
+                            """oz|ounce|ounces|slice|slices|can|cans)\b"""
+                ),
+                " "
+            )
+            .replace(Regex("""[^a-z\s-]"""), " ")
+            .replace(Regex("""\s+"""), " ")
+            .trim()
+
+        if (cleanedIngredient.isBlank()) {
+            return null
+        }
+
+        // Words that do not identify the actual food.
+        val ignoredWords = setOf(
+            "a", "an", "the",
+            "of", "and", "or", "with",
+            "in", "to", "for",
+            "fresh", "chopped", "diced",
+            "sliced", "shredded",
+            "trimmed", "rinsed", "drained",
+            "peeled", "deveined",
+            "large", "small", "medium"
+        )
+
+        // Preparation/descriptive words are useful for selecting between
+        // multiple AFCD records, but should not be required for a match.
+        val descriptorWords = setOf(
+            "raw",
+            "cooked",
+            "boiled",
+            "grilled",
+            "baked",
+            "roasted",
+            "fried",
+            "dry",
+            "dried",
+            "canned",
+            "white",
+            "brown",
+            "black",
+            "wholemeal",
+            "wholegrain",
+            "whole",
+            "plain",
+            "greek",
+            "frozen",
+            "smoked"
+        )
+
+        fun normaliseWord(word: String): String {
+            return when {
+                // Words that naturally end in "s" and should not be changed.
+                word in setOf(
+                    "asparagus",
+                    "hummus",
+                    "couscous"
+                ) -> word
+
+                // berries -> berry
+                word.endsWith("ies") && word.length > 4 ->
+                    word.dropLast(3) + "y"
+
+                // tomatoes -> tomato
+                word.endsWith("oes") && word.length > 4 ->
+                    word.dropLast(2)
+
+                // thighs -> thigh, carrots -> carrot, beans -> bean
+                word.endsWith("s") &&
+                        !word.endsWith("ss") &&
+                        word.length > 3 ->
+                    word.dropLast(1)
+
+                else -> word
             }
         }
 
-        // ---------------------------------------------------------
-        // VERIFIED PREFERRED AFCD MATCHES
-        // More specific phrases must be checked before general ones.
-        // ---------------------------------------------------------
+        val ingredientWords = cleanedIngredient
+            .split(Regex("""\s+"""))
+            .map { normaliseWord(it) }
+            .filter {
+                it.length > 1 &&
+                        it !in ignoredWords
+            }
 
-        return when {
+        if (ingredientWords.isEmpty()) {
+            return null
+        }
 
-            // Rice
-            "cooked white rice" in text ->
-                byId("F007661")
+        val mainIngredientWords = ingredientWords.filter {
+            it !in descriptorWords
+        }
 
-            "cooked brown rice" in text ->
-                byId("F007641")
+        if (mainIngredientWords.isEmpty()) {
+            return null
+        }
 
-            // Banana
-            "frozen banana" in text ->
-                byId("F009884")
+        val ingredientDescriptors = ingredientWords.filter {
+            it in descriptorWords
+        }
 
-            "banana" in text ->
-                byId("F000262")
+        data class ScoredFood(
+            val record: AfcdFoodRecord,
+            val score: Int
+        )
 
-            // Sweet potato must come before normal potato
-            "sweet potato" in text ->
-                byId("F009035")
+        val candidates = foodRecords.mapNotNull { record ->
 
-            // Normal potato
-            Regex("""\bpotato\b""").containsMatchIn(text) ->
-                byId("F007325")
+            val recordText = record.foodName
+                .lowercase()
+                .replace(Regex("""[^a-z\s-]"""), " ")
 
-            // Broccoli - cooked approximation
-            "broccoli" in text ->
-                byId("F001904")
+            val recordWords = recordText
+                .split(Regex("""\s+"""))
+                .map { normaliseWord(it) }
+                .filter { it.length > 1 }
+                .toSet()
 
-            // Bread
-            ("whole wheat bread" in text ||
-                    "wholemeal bread" in text ||
-                    "whole grain bread" in text) ->
-                byId("F001553")
+            // At least one actual food word must match.
+            val matchedMainWords = mainIngredientWords.count {
+                it in recordWords
+            }
 
-            // Cheese
-            "parmesan" in text ->
-                byId("F002478")
+            if (matchedMainWords == 0) {
+                return@mapNotNull null
+            }
 
-            "feta" in text || "fetta" in text ->
-                byId("F002452")
+            var score = 0
 
-            "mozzarella" in text ->
-                byId("F002472")
+            // Main food words are the most important.
+            score += matchedMainWords * 20
 
-            "cheddar" in text ->
-                byId("F002414")
+            // Strongly prefer records matching ALL main food words.
+            if (matchedMainWords == mainIngredientWords.size) {
+                score += 40
+            }
 
-            "shredded cheese" in text ->
-                byId("F002414")
+            // Penalise records that only match part of a multi-word food.
+            val missingMainWords =
+                mainIngredientWords.size - matchedMainWords
 
-            // Eggs
-            "hard-boiled egg" in text ||
-                    "hard boiled egg" in text ->
-                byId("F003721")
+            score -= missingMainWords * 25
 
-            "fried egg" in text ->
-                byId("F003718")
+            // Descriptors help choose the most appropriate AFCD variant.
+            val matchedDescriptors = ingredientDescriptors.count {
+                it in recordWords
+            }
 
-            Regex("""\beggs?\b""").containsMatchIn(text) ->
-                byId("F003729")
+            score += matchedDescriptors * 8
 
-            // Peanut butter must be checked before generic butter
-            "peanut butter" in text ->
-                byId("F006577")
+            // Prefer AFCD names containing the complete cleaned food phrase.
+            if (recordText.contains(cleanedIngredient)) {
+                score += 30
+            }
 
-// Butter
-            Regex("""\bbutter\b""").containsMatchIn(text) ->
-                byId("F001973")
+            // Strongly prefer records where the requested food appears
+            // near the beginning of the AFCD food name.
+            val simplifiedRecordText = recordText
+                .replace(Regex("""\s+"""), " ")
+                .trim()
 
-// Vegetable oil
-            "vegetable oil" in text ->
-                byId("F006191")
+            val mainPhrase =
+                mainIngredientWords.joinToString(" ")
 
-// Tomatoes - specific before general
-            "cherry tomato" in text ||
-                    "cherry tomatoes" in text ->
-                byId("F009190")
-
-            Regex("""\btomatoes?\b""").containsMatchIn(text) ->
-                byId("F009193")
-
-// Spinach
-            Regex("""\bspinach\b""").containsMatchIn(text) ->
-                byId("F008749")
-
-// Carrot
-            Regex("""\bcarrots?\b""").containsMatchIn(text) ->
-                byId("F002276")
-
-            // Mayonnaise
-            ("light mayonnaise" in text ||
-                    "low fat mayonnaise" in text ||
-                    "low-fat mayonnaise" in text) ->
-                byId("F005437")
-
-            Regex("""\bmayonnaise\b""").containsMatchIn(text) ->
-                byId("F005441")
-
-            // Pasta
-            // AFCD record verified for ordinary cooked white-wheat pasta.
-            ("cooked pasta" in text ||
-                    "cooked spaghetti" in text) &&
-                    "whole wheat" !in text &&
-                    "wholemeal" !in text ->
-                byId("F006456")
-
-            // Tortillas
-            "corn tortilla" in text ->
-                byId("F009854")
-
-            // Whole-wheat tortilla was not available in our AFCD search.
-            "whole wheat tortilla" in text ||
-                    "wholemeal tortilla" in text ->
-                null
-
-            Regex("""\btortilla\b""").containsMatchIn(text) ->
-                byId("F001669")
-
-            // Onion
-            Regex("""\bonions?\b""").containsMatchIn(text) ->
-                byId("F006225")
-
-            // Green beans
-            "green beans" in text ||
-                    "green bean" in text ->
-                byId("F000431")
-
-            // ---------------------------------------------------------
-            // KNOWN UNSUPPORTED / UNSAFE MATCHES
-            // Do not substitute an unrelated AFCD food.
-            // ---------------------------------------------------------
-
-            "black beans" in text ||
-                    "black bean" in text ->
-                null
-
-            // Dataset search only found smoked cod records.
-            Regex("""\bcod\b""").containsMatchIn(text) &&
-                    "smoked" !in text ->
-                null
-
-            // Plain milk did not have a suitable verified AFCD record.
-            Regex("""\bmilk\b""").containsMatchIn(text) &&
-                    "almond milk" !in text ->
-                null
-
-            // Avoid known false matches until specifically mapped.
-            "marinara" in text ->
-                null
-
-            // ---------------------------------------------------------
-            // FALLBACK MATCHER
-            // ---------------------------------------------------------
-
-            else -> {
-
-                val stopWords = setOf(
-                    "cup", "cups",
-                    "tbsp", "tablespoon", "tablespoons",
-                    "tsp", "teaspoon", "teaspoons",
-                    "oz", "ounce", "ounces",
-                    "gram", "grams", "kg", "ml", "litre", "litres",
-                    "slice", "slices",
-                    "large", "small", "medium",
-                    "fresh", "chopped", "diced", "sliced", "shredded",
-                    "trimmed", "rinsed", "drained", "peeled", "deveined",
-                    "handful", "bunch", "can", "splash",
-                    "to", "taste", "and", "or", "of"
-                )
-
-                val descriptiveWords = setOf(
-                    "cooked", "uncooked",
-                    "boiled", "grilled", "baked", "roasted",
-                    "raw", "dry", "dried",
-                    "white", "brown", "black",
-                    "plain", "greek",
-                    "canned"
-                )
-
-                val ingredientWords = text
-                    .replace(Regex("""\d+([./]\d+)?"""), " ")
-                    .replace(Regex("""[^a-z\s]"""), " ")
-                    .split(Regex("""\s+"""))
-                    .filter { word ->
-                        word.length > 2 && word !in stopWords
-                    }
-
-                if (ingredientWords.isEmpty()) {
-                    null
-                } else {
-
-                    val mainFoodWords = ingredientWords.filter {
-                        it !in descriptiveWords
-                    }
-
-                    // Conservative fallback:
-                    // Only automatically match ingredients with at least
-                    // two meaningful food words.
-                    //
-                    // Single-word foods should use the verified mappings above.
-                    if (mainFoodWords.size < 2) {
-                        null
-                    } else {
-
-                        val candidates = foodRecords.mapNotNull { record ->
-
-                            val foodName = record.foodName.lowercase()
-
-                            val allMainWordsMatch = mainFoodWords.all { word ->
-                                Regex("""\b${Regex.escape(word)}s?\b""")
-                                    .containsMatchIn(foodName)
-                            }
-
-                            if (!allMainWordsMatch) {
-                                return@mapNotNull null
-                            }
-
-                            val descriptorMatches = ingredientWords
-                                .filter { it in descriptiveWords }
-                                .count { word ->
-                                    Regex("""\b${Regex.escape(word)}\b""")
-                                        .containsMatchIn(foodName)
-                                }
-
-                            record to descriptorMatches
-                        }
-
-                        candidates
-                            .maxByOrNull { (_, score) -> score }
-                            ?.first
-                    }
+            if (
+                simplifiedRecordText.startsWith(mainPhrase) ||
+                mainIngredientWords.all { word ->
+                    simplifiedRecordText
+                        .split(Regex("""\s+"""))
+                        .take(mainIngredientWords.size + 2)
+                        .map { normaliseWord(it) }
+                        .contains(word)
                 }
+            ) {
+                score += 50
             }
+
+            // Penalise composite dishes containing lots of unrelated foods.
+            val ingredientWordSet =
+                ingredientWords.toSet()
+
+            val extraRecordWords =
+                recordWords.count { word ->
+                    word !in ingredientWordSet &&
+                            word !in ignoredWords &&
+                            word !in descriptorWords
+                }
+
+            score -= extraRecordWords * 3
+
+
+            // Some useful preparation preferences.
+            if ("dry" in ingredientDescriptors &&
+                ("dry" in recordWords || "dried" in recordWords)
+            ) {
+                score += 10
+            }
+
+            if ("canned" in ingredientDescriptors &&
+                "canned" in recordWords
+            ) {
+                score += 10
+            }
+
+            if ("cooked" in ingredientDescriptors &&
+                ("cooked" in recordWords ||
+                        "boiled" in recordWords ||
+                        "baked" in recordWords ||
+                        "grilled" in recordWords)
+            ) {
+                score += 8
+            }
+
+            // Avoid clearly conflicting preparation types.
+            if ("raw" in ingredientDescriptors &&
+                "raw" !in recordWords &&
+                ("cooked" in recordWords ||
+                        "boiled" in recordWords ||
+                        "fried" in recordWords)
+            ) {
+                score -= 10
+            }
+
+            ScoredFood(record, score)
         }
+
+        return candidates
+            .maxByOrNull { it.score }
+            ?.takeIf { it.score >= 20 }
+            ?.record
     }
 
     fun estimateIngredientGrams(ingredient: String): Double {
         val text = ingredient.lowercase().trim()
 
-        val quantityMatch = Regex("""(\d+/\d+|\d+(?:\.\d+)?)""").find(text)
+        val quantityMatch =
+            Regex("""(\d+/\d+|\d+(?:\.\d+)?)""").find(text)
 
         val quantity = quantityMatch?.value?.let { value ->
             if (value.contains("/")) {
                 val parts = value.split("/")
-                val numerator = parts.getOrNull(0)?.toDoubleOrNull() ?: 1.0
-                val denominator = parts.getOrNull(1)?.toDoubleOrNull() ?: 1.0
+                val numerator =
+                    parts.getOrNull(0)?.toDoubleOrNull() ?: 1.0
+                val denominator =
+                    parts.getOrNull(1)?.toDoubleOrNull() ?: 1.0
+
                 numerator / denominator
             } else {
                 value.toDoubleOrNull() ?: 1.0
@@ -301,38 +312,64 @@ class AfcdNutritionDataSource(
 
         return when {
 
-            Regex("""\b(oz|ounce|ounces)\b""").containsMatchIn(text) ->
+            // Ounces
+            Regex("""\b(oz|ounce|ounces)\b""")
+                .containsMatchIn(text) ->
                 quantity * 28.35
 
-            Regex("""\bkg\b""").containsMatchIn(text) ->
+            // Kilograms
+            Regex("""\bkg\b""")
+                .containsMatchIn(text) ->
                 quantity * 1000.0
 
-            Regex("""\d+(?:\.\d+)?\s*g\b|\bgrams?\b""").containsMatchIn(text) ->
+            // Grams
+            Regex("""\d+(?:\.\d+)?\s*g\b|\bgrams?\b""")
+                .containsMatchIn(text) ->
                 quantity
 
-            Regex("""\b(cup|cups)\b""").containsMatchIn(text) ->
+
+            // Millilitres
+            Regex("""\bml\b|\bmillilitres?\b|\bmilliliters?\b""")
+                .containsMatchIn(text) ->
+                quantity
+
+            // Cups
+            Regex("""\b(cup|cups)\b""")
+                .containsMatchIn(text) ->
                 quantity * 150.0
 
-            Regex("""\b(tbsp|tablespoon|tablespoons)\b""").containsMatchIn(text) ->
+            // Tablespoons
+            Regex("""\b(tbsp|tablespoon|tablespoons)\b""")
+                .containsMatchIn(text) ->
                 quantity * 15.0
 
-            Regex("""\b(tsp|teaspoon|teaspoons)\b""").containsMatchIn(text) ->
+            // Teaspoons
+            Regex("""\b(tsp|teaspoon|teaspoons)\b""")
+                .containsMatchIn(text) ->
                 quantity * 5.0
 
-            Regex("""\b(slice|slices)\b""").containsMatchIn(text) ->
+            // Slices
+            Regex("""\b(slice|slices)\b""")
+                .containsMatchIn(text) ->
                 quantity * 30.0
 
+            // Countable chicken breast
             "chicken breast" in text ->
                 quantity * 150.0
 
-            "egg" in text ->
+            // Countable eggs
+            Regex("""\beggs?\b""")
+                .containsMatchIn(text) ->
                 quantity * 50.0
 
-            "tortilla" in text ->
+            // Countable tortillas
+            Regex("""\btortillas?\b""")
+                .containsMatchIn(text) ->
                 quantity * 50.0
 
+            // Generic fallback
             else ->
-                quantity * 100.0
+                100.0
         }
     }
     fun getNutritionByAfcdId(afcdFoodId: String): NutritionInfo? {

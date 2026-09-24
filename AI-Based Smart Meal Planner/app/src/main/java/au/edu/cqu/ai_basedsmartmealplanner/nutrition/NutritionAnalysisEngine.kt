@@ -1,10 +1,12 @@
 package au.edu.cqu.ai_basedsmartmealplanner.nutrition
 
+import android.content.Context
+import android.util.Log
 import au.edu.cqu.ai_basedsmartmealplanner.model.FoodItem
 import au.edu.cqu.ai_basedsmartmealplanner.model.MealPlan
 import au.edu.cqu.ai_basedsmartmealplanner.model.NutritionInfo
 import au.edu.cqu.ai_basedsmartmealplanner.model.Recipe
-import android.content.Context
+import kotlin.math.roundToInt
 
 object NutritionAnalysisEngine {
 
@@ -15,19 +17,10 @@ object NutritionAnalysisEngine {
         afcdDataSource.loadFromAssets(context.applicationContext)
     }
 
-    private val ingredientNutritionTable = mapOf(
-        "chicken" to NutritionInfo(calories = 165, protein = 31.0, carbs = 0.0, fats = 3.6),
-        "beef" to NutritionInfo(calories = 250, protein = 26.0, carbs = 0.0, fats = 17.0),
-        "tofu" to NutritionInfo(calories = 76, protein = 8.0, carbs = 1.9, fats = 4.8),
-        "rice" to NutritionInfo(calories = 130, protein = 2.7, carbs = 28.0, fats = 0.3),
-        "broccoli" to NutritionInfo(calories = 55, protein = 3.7, carbs = 11.2, fats = 0.6),
-        "egg" to NutritionInfo(calories = 78, protein = 6.3, carbs = 0.6, fats = 5.3),
-        "spinach" to NutritionInfo(calories = 23, protein = 2.9, carbs = 3.6, fats = 0.4),
-        "yogurt" to NutritionInfo(calories = 59, protein = 10.0, carbs = 3.6, fats = 0.4),
-        "salmon" to NutritionInfo(calories = 208, protein = 20.0, carbs = 0.0, fats = 13.0)
-    )
+    fun calculateTotalNutrition(
+        items: List<NutritionInfo>
+    ): NutritionInfo {
 
-    fun calculateTotalNutrition(items: List<NutritionInfo>): NutritionInfo {
         return NutritionInfo(
             calories = items.sumOf { it.calories },
             protein = items.sumOf { it.protein },
@@ -36,8 +29,9 @@ object NutritionAnalysisEngine {
         )
     }
 
-    fun analyzeRecipe(recipe: Recipe): NutritionInfo {
-        val totalCalories = recipe.totalCalories
+    fun analyzeRecipe(
+        recipe: Recipe
+    ): NutritionInfo {
 
         var totalProtein = 0.0
         var totalCarbs = 0.0
@@ -45,24 +39,94 @@ object NutritionAnalysisEngine {
 
         for (ingredient in recipe.ingredients) {
 
-            val matchedFood = if (::afcdDataSource.isInitialized) {
-                afcdDataSource.findFoodByIngredient(ingredient)
-            } else {
-                null
-            }
+            val matchedFood =
+                if (::afcdDataSource.isInitialized) {
+                    afcdDataSource.findFoodByIngredient(
+                        ingredient
+                    )
+                } else {
+                    null
+                }
 
             if (matchedFood != null) {
 
                 val estimatedGrams =
-                    afcdDataSource.estimateIngredientGrams(ingredient)
+                    afcdDataSource.estimateIngredientGrams(
+                        ingredient
+                    )
 
-                val portionFactor = estimatedGrams / 100.0
+                val portionFactor =
+                    estimatedGrams / 100.0
 
-                totalProtein += matchedFood.protein * portionFactor
-                totalCarbs += matchedFood.carbs * portionFactor
-                totalFats += matchedFood.fats * portionFactor
+                val ingredientProtein =
+                    matchedFood.protein * portionFactor
+
+                val ingredientCarbs =
+                    matchedFood.carbs * portionFactor
+
+                val ingredientFats =
+                    matchedFood.fats * portionFactor
+
+                Log.d(
+                    "AFCD_DEBUG",
+                    """
+                    ------------------------------
+                    Ingredient: $ingredient
+                    Matched AFCD ID: ${matchedFood.foodKey}
+                    Matched AFCD food: ${matchedFood.foodName}
+                    Estimated grams: $estimatedGrams
+                    Portion factor: $portionFactor
+
+                    AFCD per 100g:
+                    Protein: ${matchedFood.protein}
+                    Carbs: ${matchedFood.carbs}
+                    Fats: ${matchedFood.fats}
+
+                    Ingredient contribution:
+                    Protein: $ingredientProtein
+                    Carbs: $ingredientCarbs
+                    Fats: $ingredientFats
+                    ------------------------------
+                    """.trimIndent()
+                )
+
+                totalProtein += ingredientProtein
+                totalCarbs += ingredientCarbs
+                totalFats += ingredientFats
+
+            } else {
+
+                Log.d(
+                    "AFCD_DEBUG",
+                    """
+                    ------------------------------
+                    NO AFCD MATCH
+                    Ingredient: $ingredient
+                    ------------------------------
+                    """.trimIndent()
+                )
             }
         }
+
+        val totalCalories = (
+                (totalProtein * 4.0) +
+                        (totalCarbs * 4.0) +
+                        (totalFats * 9.0)
+                ).roundToInt()
+
+        Log.d(
+            "AFCD_DEBUG",
+            """
+            ==============================
+            RECIPE TOTAL
+            Recipe: ${recipe.title}
+            Protein: $totalProtein
+            Carbs: $totalCarbs
+            Fats: $totalFats
+            Calories: $totalCalories
+            ==============================
+            """.trimIndent()
+        )
 
         return NutritionInfo(
             calories = totalCalories,
@@ -72,12 +136,18 @@ object NutritionAnalysisEngine {
         )
     }
 
-    fun analyzeDailyPlan(mealPlan: MealPlan): NutritionInfo {
-        val nutritionItems = mealPlan.dailyMeals.map { meal ->
-            analyzeRecipe(meal)
-        }
+    fun analyzeDailyPlan(
+        mealPlan: MealPlan
+    ): NutritionInfo {
 
-        return calculateTotalNutrition(nutritionItems)
+        val nutritionItems =
+            mealPlan.dailyMeals.map { meal ->
+                analyzeRecipe(meal)
+            }
+
+        return calculateTotalNutrition(
+            nutritionItems
+        )
     }
 
     fun calculateTotalNutritionFromAfcdIds(
@@ -85,11 +155,16 @@ object NutritionAnalysisEngine {
         dataSource: AfcdNutritionDataSource
     ): NutritionInfo {
 
-        val nutritionItems = afcdFoodIds.mapNotNull { afcdFoodId ->
-            dataSource.getNutritionByAfcdId(afcdFoodId)
-        }
+        val nutritionItems =
+            afcdFoodIds.mapNotNull { afcdFoodId ->
+                dataSource.getNutritionByAfcdId(
+                    afcdFoodId
+                )
+            }
 
-        return calculateTotalNutrition(nutritionItems)
+        return calculateTotalNutrition(
+            nutritionItems
+        )
     }
 
     fun calculateTotalNutritionFromFoodItems(
@@ -97,9 +172,10 @@ object NutritionAnalysisEngine {
         dataSource: AfcdNutritionDataSource
     ): NutritionInfo {
 
-        val afcdFoodIds = foodItems.mapNotNull { foodItem ->
-            foodItem.afcdFoodId
-        }
+        val afcdFoodIds =
+            foodItems.mapNotNull { foodItem ->
+                foodItem.afcdFoodId
+            }
 
         return calculateTotalNutritionFromAfcdIds(
             afcdFoodIds,

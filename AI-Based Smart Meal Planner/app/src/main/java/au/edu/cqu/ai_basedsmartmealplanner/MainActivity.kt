@@ -1,9 +1,9 @@
 package au.edu.cqu.ai_basedsmartmealplanner
 
-import au.edu.cqu.ai_basedsmartmealplanner.nutrition.NutritionAnalysisEngine
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
+import au.edu.cqu.ai_basedsmartmealplanner.nutrition.NutritionAnalysisEngine
 import au.edu.cqu.ai_basedsmartmealplanner.ui.GroceryListFragment
 import au.edu.cqu.ai_basedsmartmealplanner.ui.HomeFragment
 import au.edu.cqu.ai_basedsmartmealplanner.ui.MealPlanFragment
@@ -11,11 +11,13 @@ import au.edu.cqu.ai_basedsmartmealplanner.ui.ProfileFragment
 import au.edu.cqu.ai_basedsmartmealplanner.ui.RecipesFragment
 import com.google.android.material.bottomnavigation.BottomNavigationView
 
-class   MainActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        NutritionAnalysisEngine.initialize(this)
         super.onCreate(savedInstanceState)
+
+        NutritionAnalysisEngine.initialize(applicationContext)
+
         setContentView(R.layout.activity_main)
 
         val bottomNavigation =
