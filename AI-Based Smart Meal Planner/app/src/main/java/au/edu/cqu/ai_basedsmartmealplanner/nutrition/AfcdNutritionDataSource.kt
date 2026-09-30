@@ -88,6 +88,7 @@ class AfcdNutritionDataSource(
         val descriptorWords = setOf(
             "raw",
             "cooked",
+            "cooking",
             "boiled",
             "grilled",
             "baked",
