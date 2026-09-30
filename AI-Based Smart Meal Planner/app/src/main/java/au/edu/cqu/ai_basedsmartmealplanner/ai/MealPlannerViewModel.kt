@@ -159,15 +159,7 @@ class MealPlannerViewModel(
             _uiState.value =
                 MealUiState.Success(restoredPlan)
 
-            val currentProfile =
-                profileManager.getProfile()
 
-            _groceryList.value =
-                GroceryListGenerator.generateFromMealPlan(
-                    mealPlan = restoredPlan,
-                    availableIngredients =
-                        currentProfile.availableIngredients
-                )
 
             _nutritionInfo.value =
                 calculateTodayNutrition(restoredPlan)
