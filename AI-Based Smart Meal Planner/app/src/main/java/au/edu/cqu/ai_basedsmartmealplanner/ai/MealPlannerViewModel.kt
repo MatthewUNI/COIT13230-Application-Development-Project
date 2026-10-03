@@ -52,7 +52,6 @@ class MealPlannerViewModel(
 
     init {
         loadSavedPlans()
-        loadSavedGroceryList()
     }
 
     private fun calculateTodayNutrition(
@@ -110,7 +109,7 @@ class MealPlannerViewModel(
         }
     }
 
-    private fun loadSavedGroceryList() {
+    fun loadSavedGroceryList() {
 
         viewModelScope.launch(Dispatchers.IO) {
 
@@ -118,13 +117,14 @@ class MealPlannerViewModel(
                 groceryItemDao.getAll()
 
             if (savedItems.isNotEmpty()) {
-
                 _groceryList.value =
                     GroceryList(
                         items = savedItems.map {
                             it.toGroceryItem()
                         }
                     )
+            } else {
+                _groceryList.value = null
             }
         }
     }
@@ -159,7 +159,7 @@ class MealPlannerViewModel(
             _uiState.value =
                 MealUiState.Success(restoredPlan)
 
-
+            loadSavedGroceryList()
 
             _nutritionInfo.value =
                 calculateTodayNutrition(restoredPlan)

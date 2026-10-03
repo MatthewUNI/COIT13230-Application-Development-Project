@@ -31,6 +31,13 @@ class GroceryListFragment : Fragment(R.layout.fragment_grocery_list) {
         val groceryContainer = view.findViewById<LinearLayout>(R.id.groceryListContainer)
         val btnGenerateGrocery = view.findViewById<Button>(R.id.buttonGenerateGroceryList)
 
+        // Show the empty grocery state if there is no active meal plan
+        if (viewModel.uiState.value !is MealUiState.Success) {
+            tvNoGrocery.visibility = View.VISIBLE
+            groceryContainer.visibility = View.GONE
+            btnGenerateGrocery.visibility = View.VISIBLE
+        }
+
         // Generate or refresh the grocery list on demand
         btnGenerateGrocery.setOnClickListener {
             val currentState = viewModel.uiState.value
@@ -53,9 +60,11 @@ class GroceryListFragment : Fragment(R.layout.fragment_grocery_list) {
                     if (groceryList == null || groceryList.items.isEmpty()) {
                         tvNoGrocery.visibility = View.VISIBLE
                         groceryContainer.visibility = View.GONE
+                        btnGenerateGrocery.visibility = View.VISIBLE
                     } else {
                         tvNoGrocery.visibility = View.GONE
                         groceryContainer.visibility = View.VISIBLE
+                        btnGenerateGrocery.visibility = View.GONE
                         groceryContainer.removeAllViews()
 
                         groceryList.items.forEach { item ->
