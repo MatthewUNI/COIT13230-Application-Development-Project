@@ -68,6 +68,13 @@ class ProfileFragment : Fragment(R.layout.fragment_profile) {
 
             textNoIngredients.visibility = View.GONE
 
+            // ADD THESE FIVE LINES HERE:
+            if (ingredientsContainer.visibility == View.VISIBLE) {
+                buttonToggleIngredients.text = "Ingredients (${availableIngredients.size}) ▲"
+            } else {
+                buttonToggleIngredients.text = "Ingredients (${availableIngredients.size}) ▼"
+            }
+
             availableIngredients.forEach { ingredient ->
 
                 val row = LinearLayout(requireContext()).apply {

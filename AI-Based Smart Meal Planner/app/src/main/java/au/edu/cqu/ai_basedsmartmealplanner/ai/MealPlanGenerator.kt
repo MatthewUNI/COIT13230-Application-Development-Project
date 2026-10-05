@@ -16,18 +16,18 @@ object MealPlanGenerator {
         dietaryRestrictions: List<String>,
         availableIngredients: List<String>
     ): MealPlan? {
-        // 1. Build the dynamic prompt using PromptBuilder
+        // Build the dynamic prompt using PromptBuilder
         val prompt = PromptBuilder.buildMealPlanPrompt(dietaryRestrictions, availableIngredients)
 
-        // 2. Call the AI service via GenAIClient
+        // Call the AI service via GenAIClient
         val response = GenAIClient.fetchMealPlanAsync(prompt) ?: return null
 
-        // 3. Extract the text response from the Gemini payload structure
+        // Extract the text response from the Gemini payload structure
         val rawText = response.candidates?.firstOrNull()
             ?.content?.parts?.firstOrNull()
             ?.text ?: return null
 
-        // 4. Parse JSON into MealPlan data class
+        // Parse JSON into MealPlan data class
         return parseMealPlanJson(rawText)
     }
 
