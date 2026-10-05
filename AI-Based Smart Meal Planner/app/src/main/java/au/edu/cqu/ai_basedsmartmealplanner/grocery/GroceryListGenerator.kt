@@ -4,6 +4,9 @@ import au.edu.cqu.ai_basedsmartmealplanner.model.GroceryItem
 import au.edu.cqu.ai_basedsmartmealplanner.model.GroceryList
 import au.edu.cqu.ai_basedsmartmealplanner.model.MealPlan
 import au.edu.cqu.ai_basedsmartmealplanner.model.Recipe
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 object GroceryListGenerator {
 
@@ -19,21 +22,22 @@ object GroceryListGenerator {
         "greek yoghurt", "yogurt", "protein powder"
     )
 
-    /**
-     * Extracts required ingredients across all scheduled meals and maps them
-     * into a categorized grocery list[cite: 1].
-     */
     fun generateFromMealPlan(
         mealPlan: MealPlan,
-        availableIngredients: List<String> = emptyList()
+        availableIngredients: List<String> = emptyList(),
+        isTodayOnly: Boolean = false
     ): GroceryList {
-        val rawIngredients = mealPlan.dailyMeals.flatMap { it.ingredients }
+        val daysToInclude = if (isTodayOnly) {
+            val today = SimpleDateFormat("EEEE", Locale.ENGLISH).format(Date())
+            mealPlan.dailyMeals.filter { it.day.equals(today, ignoreCase = true) }
+        } else {
+            mealPlan.dailyMeals
+        }
+
+        val rawIngredients = daysToInclude.flatMap { it.ingredients }
         return buildCategorizedList(rawIngredients, availableIngredients)
     }
 
-    /**
-     * Creates a categorized list for an individual recipe[cite: 1].
-     */
     fun generateFromRecipe(
         recipe: Recipe,
         availableIngredients: List<String> = emptyList()
@@ -47,28 +51,44 @@ object GroceryListGenerator {
     ): GroceryList {
         val inventoryNormalized = availableIngredients.map { it.trim().lowercase() }.toSet()
 
-        val items = rawIngredients
+        val missingItemsParsed = rawIngredients
             .map { it.trim() }
             .filter { it.isNotBlank() }
-            .distinctBy { it.lowercase() }
-            .filterNot { ingredient ->
-                // Skip items the user already has in their available ingredients[cite: 1]
-                inventoryNormalized.any { available -> ingredient.lowercase().contains(available) }
+            .map { raw ->
+                // Separates quantities (like "200g") from the base name (like "chicken breast")
+                val match = Regex("""^([\d\./\s]*(?:g|kg|ml|cup|cups|tbsp|tsp|slices?|whole|cans?|pieces?|eggs?)?)\s*(.*)""", RegexOption.IGNORE_CASE).find(raw)
+                if (match != null && match.groupValues[2].isNotBlank()) {
+                    Pair(match.groupValues[1].trim(), match.groupValues[2].trim())
+                } else {
+                    Pair("", raw)
+                }
             }
-            .map { ingredient ->
-                GroceryItem(
-                    name = ingredient,
-                    category = categorizeIngredient(ingredient),
-                    isPurchased = false
-                )
+            .filterNot { (_, name) ->
+                inventoryNormalized.any { available -> name.lowercase().contains(available) }
             }
+
+        // Group duplicates by the base name and combine their amounts
+        val groupedItems = missingItemsParsed.groupBy { it.second.lowercase() }
+
+        val items = groupedItems.map { (_, pairList) ->
+            val actualName = pairList.first().second
+            val amounts = pairList.map { it.first }.filter { it.isNotBlank() }
+            val combinedAmount = if (amounts.isEmpty()) "" else amounts.joinToString(" + ")
+
+            val finalName = if (combinedAmount.isNotBlank()) "$actualName ($combinedAmount)" else actualName
+
+            GroceryItem(
+                name = finalName,
+                quantity = 1.0,
+                unit = "",
+                category = categorizeIngredient(actualName),
+                isPurchased = false
+            )
+        }
 
         return GroceryList(items = items)
     }
 
-    /**
-     * Classifies ingredients into Produce, Protein, or Pantry[cite: 1].
-     */
     fun categorizeIngredient(ingredient: String): String {
         val lower = ingredient.lowercase()
         return when {

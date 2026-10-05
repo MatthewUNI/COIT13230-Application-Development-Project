@@ -23,60 +23,56 @@ class ProfileFragment : Fragment(R.layout.fragment_profile) {
         UserProfileManager.initialize(requireContext())
 
         val radioGroupGoal = view.findViewById<RadioGroup>(R.id.radioGroupGoal)
+        val editCurrentWeight = view.findViewById<TextInputEditText>(R.id.editCurrentWeight)
+        val editTargetWeight = view.findViewById<TextInputEditText>(R.id.editTargetWeight)
+        val editDietaryRequirements = view.findViewById<TextInputEditText>(R.id.editDietaryRequirements)
+        val editFoodPreferences = view.findViewById<TextInputEditText>(R.id.editFoodPreferences)
+        val editIngredient = view.findViewById<TextInputEditText>(R.id.editIngredient)
 
-        val editCurrentWeight =
-            view.findViewById<TextInputEditText>(R.id.editCurrentWeight)
+        val buttonToggleIngredients = view.findViewById<Button>(R.id.buttonToggleIngredients)
+        val buttonRemoveAllIngredients = view.findViewById<Button>(R.id.buttonRemoveAllIngredients)
+        val buttonSaveProfile = view.findViewById<Button>(R.id.buttonSaveProfile)
+        val buttonAddIngredient = view.findViewById<Button>(R.id.buttonAddIngredient)
 
-        val editTargetWeight =
-            view.findViewById<TextInputEditText>(R.id.editTargetWeight)
+        val ingredientsContainer = view.findViewById<LinearLayout>(R.id.ingredientsContainer)
+        val textNoIngredients = view.findViewById<TextView>(R.id.textNoIngredients)
 
-        val editDietaryRequirements =
-            view.findViewById<TextInputEditText>(R.id.editDietaryRequirements)
-
-        val editFoodPreferences =
-            view.findViewById<TextInputEditText>(R.id.editFoodPreferences)
-
-        val editIngredient =
-            view.findViewById<TextInputEditText>(R.id.editIngredient)
-
-        val buttonToggleIngredients =
-            view.findViewById<Button>(R.id.buttonToggleIngredients)
-
-        val buttonSaveProfile =
-            view.findViewById<Button>(R.id.buttonSaveProfile)
-
-        val ingredientsContainer =
-            view.findViewById<LinearLayout>(R.id.ingredientsContainer)
-
-        val textNoIngredients =
-            view.findViewById<TextView>(R.id.textNoIngredients)
-
-        val buttonAddIngredient =
-            view.findViewById<Button>(R.id.buttonAddIngredient)
+        // Helper function to save ingredients to your existing UserProfileManager instantly
+        fun saveIngredientsToManager() {
+            val currentProfile = UserProfileManager.getProfile()
+            val updatedProfile = UserProfile(
+                goalType = currentProfile.goalType,
+                currentWeight = currentProfile.currentWeight,
+                targetWeight = currentProfile.targetWeight,
+                dietaryRequirements = currentProfile.dietaryRequirements,
+                foodPreferences = currentProfile.foodPreferences,
+                availableIngredients = availableIngredients.toList()
+            )
+            UserProfileManager.updateProfile(requireContext(), updatedProfile)
+        }
 
         fun updateIngredientDisplay() {
-
             ingredientsContainer.removeAllViews()
 
             if (availableIngredients.isEmpty()) {
                 ingredientsContainer.visibility = View.GONE
                 textNoIngredients.visibility = View.VISIBLE
-                buttonToggleIngredients.text =
-                    "Ingredients (${availableIngredients.size}) ▼"
+                buttonToggleIngredients.text = "Ingredients (0) ▼"
+                buttonRemoveAllIngredients.visibility = View.GONE
                 return
             }
 
             textNoIngredients.visibility = View.GONE
 
-            // ADD THESE FIVE LINES HERE:
             if (ingredientsContainer.visibility == View.VISIBLE) {
                 buttonToggleIngredients.text = "Ingredients (${availableIngredients.size}) ▲"
+                buttonRemoveAllIngredients.visibility = View.VISIBLE
             } else {
                 buttonToggleIngredients.text = "Ingredients (${availableIngredients.size}) ▼"
+                buttonRemoveAllIngredients.visibility = View.GONE
             }
 
             availableIngredients.forEach { ingredient ->
-
                 val row = LinearLayout(requireContext()).apply {
                     orientation = LinearLayout.HORIZONTAL
                     setPadding(8, 8, 8, 8)
@@ -85,12 +81,7 @@ class ProfileFragment : Fragment(R.layout.fragment_profile) {
                 val ingredientText = TextView(requireContext()).apply {
                     text = ingredient
                     textSize = 16f
-
-                    layoutParams = LinearLayout.LayoutParams(
-                        0,
-                        LinearLayout.LayoutParams.WRAP_CONTENT,
-                        1f
-                    )
+                    layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
                 }
 
                 val removeButton = Button(requireContext()).apply {
@@ -109,6 +100,7 @@ class ProfileFragment : Fragment(R.layout.fragment_profile) {
 
                     setOnClickListener {
                         availableIngredients.remove(ingredient)
+                        saveIngredientsToManager() // Save the deletion immediately
                         updateIngredientDisplay()
                     }
                 }
@@ -121,41 +113,40 @@ class ProfileFragment : Fragment(R.layout.fragment_profile) {
         }
 
         buttonToggleIngredients.setOnClickListener {
-
             if (availableIngredients.isEmpty()) {
                 return@setOnClickListener
             }
 
             if (ingredientsContainer.visibility == View.VISIBLE) {
                 ingredientsContainer.visibility = View.GONE
-                buttonToggleIngredients.text =
-                    "Ingredients (${availableIngredients.size}) ▼"
             } else {
                 ingredientsContainer.visibility = View.VISIBLE
-                buttonToggleIngredients.text =
-                    "Ingredients (${availableIngredients.size}) ▲"
             }
+            updateIngredientDisplay()
+        }
+
+        buttonRemoveAllIngredients.setOnClickListener {
+            availableIngredients.clear()
+            saveIngredientsToManager() // Save the cleared list immediately
+            ingredientsContainer.visibility = View.GONE
+            updateIngredientDisplay()
         }
 
         buttonAddIngredient.setOnClickListener {
+            val ingredient = editIngredient.text.toString().trim()
 
-            val ingredient = editIngredient.text
-                .toString()
-                .trim()
-
-            if (ingredient.isNotEmpty() &&
-                !availableIngredients.contains(ingredient)
-            ) {
+            if (ingredient.isNotEmpty() && !availableIngredients.contains(ingredient)) {
                 availableIngredients.add(ingredient)
-
                 editIngredient.text?.clear()
 
+                saveIngredientsToManager() // Save the new addition immediately
+
+                ingredientsContainer.visibility = View.VISIBLE
                 updateIngredientDisplay()
             }
         }
 
         buttonSaveProfile.setOnClickListener {
-
             val goalType = when (radioGroupGoal.checkedRadioButtonId) {
                 R.id.radioLose -> "Lose"
                 R.id.radioMaintain -> "Maintain"
@@ -163,23 +154,18 @@ class ProfileFragment : Fragment(R.layout.fragment_profile) {
                 else -> ""
             }
 
-            val currentWeight =
-                editCurrentWeight.text.toString().toDoubleOrNull() ?: 0.0
+            val currentWeight = editCurrentWeight.text.toString().toDoubleOrNull() ?: 0.0
+            val targetWeight = editTargetWeight.text.toString().toDoubleOrNull() ?: 0.0
 
-            val targetWeight =
-                editTargetWeight.text.toString().toDoubleOrNull() ?: 0.0
+            val dietaryRequirements = editDietaryRequirements.text.toString()
+                .split(",")
+                .map { it.trim() }
+                .filter { it.isNotEmpty() }
 
-            val dietaryRequirements =
-                editDietaryRequirements.text.toString()
-                    .split(",")
-                    .map { it.trim() }
-                    .filter { it.isNotEmpty() }
-
-            val foodPreferences =
-                editFoodPreferences.text.toString()
-                    .split(",")
-                    .map { it.trim() }
-                    .filter { it.isNotEmpty() }
+            val foodPreferences = editFoodPreferences.text.toString()
+                .split(",")
+                .map { it.trim() }
+                .filter { it.isNotEmpty() }
 
             val profile = UserProfile(
                 goalType = goalType,
@@ -191,22 +177,10 @@ class ProfileFragment : Fragment(R.layout.fragment_profile) {
             )
 
             if (UserProfileManager.isProfileValid(profile)) {
-
                 UserProfileManager.updateProfile(requireContext(), profile)
-
-                Toast.makeText(
-                    requireContext(),
-                    "Profile saved",
-                    Toast.LENGTH_SHORT
-                ).show()
-
+                Toast.makeText(requireContext(), "Profile saved", Toast.LENGTH_SHORT).show()
             } else {
-
-                Toast.makeText(
-                    requireContext(),
-                    "Please complete all required fields",
-                    Toast.LENGTH_SHORT
-                ).show()
+                Toast.makeText(requireContext(), "Please complete all required fields", Toast.LENGTH_SHORT).show()
             }
         }
 
@@ -227,13 +201,8 @@ class ProfileFragment : Fragment(R.layout.fragment_profile) {
             editTargetWeight.setText(savedProfile.targetWeight.toString())
         }
 
-        editDietaryRequirements.setText(
-            savedProfile.dietaryRequirements.joinToString(", ")
-        )
-
-        editFoodPreferences.setText(
-            savedProfile.foodPreferences.joinToString(", ")
-        )
+        editDietaryRequirements.setText(savedProfile.dietaryRequirements.joinToString(", "))
+        editFoodPreferences.setText(savedProfile.foodPreferences.joinToString(", "))
 
         availableIngredients.clear()
         availableIngredients.addAll(savedProfile.availableIngredients)

@@ -145,19 +145,38 @@
             android:layout_marginBottom="12dp"
             android:text="Add Ingredient" />
 
-        <Button
-            android:id="@+id/buttonToggleIngredients"
-            android:layout_width="wrap_content"
+        <!-- REPLACED TOGGLE BUTTON WITH THIS LINEAR LAYOUT -->
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="12dp"
-            android:minWidth="0dp"
-            android:minHeight="0dp"
-            android:paddingStart="12dp"
-            android:paddingTop="6dp"
-            android:paddingEnd="12dp"
-            android:paddingBottom="6dp"
-            android:text="Ingredients (0) ▼"
-            android:textSize="13sp" />
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="12dp">
+
+            <Button
+                android:id="@+id/buttonToggleIngredients"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:minWidth="0dp"
+                android:minHeight="0dp"
+                android:paddingStart="12dp"
+                android:paddingTop="6dp"
+                android:paddingEnd="12dp"
+                android:paddingBottom="6dp"
+                android:text="Ingredients (0) ▼"
+                android:textSize="13sp" />
+
+            <Button
+                android:id="@+id/buttonRemoveAllIngredients"
+                style="?attr/borderlessButtonStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:text="Clear All"
+                android:textColor="#B00020"
+                android:visibility="gone" />
+
+        </LinearLayout>
 
         <TextView
             android:id="@+id/textNoIngredients"
