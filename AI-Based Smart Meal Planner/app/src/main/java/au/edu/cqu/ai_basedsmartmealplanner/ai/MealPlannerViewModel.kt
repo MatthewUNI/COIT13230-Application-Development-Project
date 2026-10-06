@@ -128,9 +128,32 @@ class MealPlannerViewModel(
                 val preferenceText = if (profile.foodPreferences.isNotEmpty()) profile.foodPreferences.joinToString(", ") else "No specific food preferences"
 
                 val goalGuidance = when (profile.goalType.lowercase()) {
-                    "lose" -> "The user's goal is weight loss. Use sensible meal portions intended to support a moderate calorie deficit."
-                    "gain" -> "The user's goal is weight gain. Use sensible meal portions intended to support a moderate calorie surplus."
-                    else -> "The user's goal is weight maintenance. Use sensible meal portions intended to support maintaining their current body weight."
+                    "lose" -> """
+                        The user's goal is weight loss.
+                        Use sensible meal portions intended to support a moderate calorie deficit.
+                        Aim for approximately:
+                        - 35% of daily calories from protein
+                        - 35% of daily calories from carbohydrates
+                        - 30% of daily calories from fat
+                    """.trimIndent()
+
+                                    "gain" -> """
+                        The user's goal is weight gain.
+                        Use sensible meal portions intended to support a moderate calorie surplus.
+                        Aim for approximately:
+                        - 30% of daily calories from protein
+                        - 45% of daily calories from carbohydrates
+                        - 25% of daily calories from fat
+                    """.trimIndent()
+
+                                    else -> """
+                        The user's goal is weight maintenance.
+                        Use sensible meal portions intended to support maintaining their current body weight.
+                        Aim for approximately:
+                        - 30% of daily calories from protein
+                        - 40% of daily calories from carbohydrates
+                        - 30% of daily calories from fat
+                    """.trimIndent()
                 }
 
                 val pantryGuidance = if (isPantryOnly) {
@@ -162,6 +185,19 @@ class MealPlannerViewModel(
 
                     WEIGHT GOAL:
                     $goalGuidance
+                    
+                    MACRONUTRIENT GUIDANCE:
+                    - Treat the macronutrient percentages above as percentages of total calories, not percentages by weight.
+                    - Protein provides approximately 4 calories per gram.
+                    - Carbohydrates provide approximately 4 calories per gram.
+                    - Fat provides approximately 9 calories per gram.
+                    - Adjust ingredient quantities and meal composition so the total daily nutrition is reasonably close to the target macronutrient distribution.
+                    - Avoid excessively high fat, carbohydrate, or protein totals that significantly distort the target ratio.
+                    - Spread nutrition reasonably across Breakfast, Lunch, and Dinner.
+                    - Use realistic portion sizes for one adult.
+                    - Avoid excessively large ingredient quantities.
+                    - Weight-loss plans should generally contain less total energy than maintenance plans.
+                    - Weight-gain plans should generally contain more total energy than maintenance plans.
                     
                     $pantryGuidance
 
