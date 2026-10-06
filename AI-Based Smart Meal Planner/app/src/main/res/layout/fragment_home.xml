@@ -16,32 +16,32 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal"
+            android:layout_marginBottom="32dp"
             android:text="DAILY NUTRITION"
             android:textSize="20sp"
-            android:textStyle="bold"
-            android:layout_marginBottom="32dp" />
+            android:textStyle="bold" />
 
         <LinearLayout
             android:id="@+id/nutritionContainer"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginBottom="32dp"
             android:orientation="vertical"
-            android:visibility="gone"
-            android:layout_marginBottom="32dp">
+            android:visibility="gone">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
                 android:gravity="center"
+                android:orientation="horizontal"
                 android:weightSum="3">
 
                 <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:orientation="vertical"
-                    android:gravity="center">
+                    android:gravity="center"
+                    android:orientation="vertical">
 
                     <TextView
                         android:id="@+id/textProtein"
@@ -55,14 +55,15 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Protein" />
+
                 </LinearLayout>
 
                 <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:orientation="vertical"
-                    android:gravity="center">
+                    android:gravity="center"
+                    android:orientation="vertical">
 
                     <TextView
                         android:id="@+id/textCarbs"
@@ -76,14 +77,15 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Carbs" />
+
                 </LinearLayout>
 
                 <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:orientation="vertical"
-                    android:gravity="center">
+                    android:gravity="center"
+                    android:orientation="vertical">
 
                     <TextView
                         android:id="@+id/textFats"
@@ -97,6 +99,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Fats" />
+
                 </LinearLayout>
 
             </LinearLayout>
@@ -104,10 +107,10 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:gravity="center"
                 android:layout_marginTop="16dp"
-                android:layout_marginBottom="24dp">
+                android:layout_marginBottom="24dp"
+                android:gravity="center"
+                android:orientation="vertical">
 
                 <TextView
                     android:id="@+id/textCalories"
@@ -130,19 +133,19 @@
             android:id="@+id/textNoNutrition"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="No nutrition information available."
-            android:textAlignment="center"
+            android:layout_marginBottom="24dp"
             android:padding="16dp"
-            android:layout_marginBottom="24dp" />
+            android:text="No nutrition information available."
+            android:textAlignment="center" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal"
+            android:layout_marginBottom="24dp"
             android:text="TODAY'S MEALS"
             android:textSize="20sp"
-            android:textStyle="bold"
-            android:layout_marginBottom="24dp" />
+            android:textStyle="bold" />
 
         <LinearLayout
             android:id="@+id/mealsContainer"
@@ -151,20 +154,22 @@
             android:orientation="vertical"
             android:visibility="gone">
 
+            <!-- BREAKFAST -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center_vertical"
-                android:padding="16dp"
                 android:layout_marginBottom="16dp"
-                android:background="@color/card_background">
+                android:background="@color/card_background"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:padding="16dp">
 
                 <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:orientation="vertical">
+                    android:orientation="vertical"
+                    android:paddingEnd="8dp">
 
                     <TextView
                         android:layout_width="wrap_content"
@@ -177,30 +182,60 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Meal not available" />
+
                 </LinearLayout>
 
-                <Button
-                    android:id="@+id/buttonViewBreakfast"
+                <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="View" />
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <Button
+                        android:id="@+id/buttonViewBreakfast"
+                        android:layout_width="wrap_content"
+                        android:layout_height="40dp"
+                        android:minWidth="0dp"
+                        android:minHeight="0dp"
+                        android:paddingStart="12dp"
+                        android:paddingEnd="12dp"
+                        android:text="View"
+                        android:textAllCaps="false"
+                        android:textSize="12sp" />
+
+                    <Button
+                        android:id="@+id/buttonToggleBreakfast"
+                        android:layout_width="wrap_content"
+                        android:layout_height="40dp"
+                        android:layout_marginStart="6dp"
+                        android:minWidth="0dp"
+                        android:minHeight="0dp"
+                        android:paddingStart="12dp"
+                        android:paddingEnd="12dp"
+                        android:text="Exclude"
+                        android:textAllCaps="false"
+                        android:textSize="12sp" />
+
+                </LinearLayout>
 
             </LinearLayout>
 
+            <!-- LUNCH -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center_vertical"
-                android:padding="16dp"
                 android:layout_marginBottom="16dp"
-                android:background="@color/card_background">
+                android:background="@color/card_background"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:padding="16dp">
 
                 <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:orientation="vertical">
+                    android:orientation="vertical"
+                    android:paddingEnd="8dp">
 
                     <TextView
                         android:layout_width="wrap_content"
@@ -213,30 +248,60 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Meal not available" />
+
                 </LinearLayout>
 
-                <Button
-                    android:id="@+id/buttonViewLunch"
+                <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="View" />
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <Button
+                        android:id="@+id/buttonViewLunch"
+                        android:layout_width="wrap_content"
+                        android:layout_height="40dp"
+                        android:minWidth="0dp"
+                        android:minHeight="0dp"
+                        android:paddingStart="12dp"
+                        android:paddingEnd="12dp"
+                        android:text="View"
+                        android:textAllCaps="false"
+                        android:textSize="12sp" />
+
+                    <Button
+                        android:id="@+id/buttonToggleLunch"
+                        android:layout_width="wrap_content"
+                        android:layout_height="40dp"
+                        android:layout_marginStart="6dp"
+                        android:minWidth="0dp"
+                        android:minHeight="0dp"
+                        android:paddingStart="12dp"
+                        android:paddingEnd="12dp"
+                        android:text="Exclude"
+                        android:textAllCaps="false"
+                        android:textSize="12sp" />
+
+                </LinearLayout>
 
             </LinearLayout>
 
+            <!-- DINNER -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center_vertical"
-                android:padding="16dp"
                 android:layout_marginBottom="32dp"
-                android:background="@color/card_background">
+                android:background="@color/card_background"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:padding="16dp">
 
                 <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:orientation="vertical">
+                    android:orientation="vertical"
+                    android:paddingEnd="8dp">
 
                     <TextView
                         android:layout_width="wrap_content"
@@ -249,13 +314,41 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Meal not available" />
+
                 </LinearLayout>
 
-                <Button
-                    android:id="@+id/buttonViewDinner"
+                <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="View" />
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <Button
+                        android:id="@+id/buttonViewDinner"
+                        android:layout_width="wrap_content"
+                        android:layout_height="40dp"
+                        android:minWidth="0dp"
+                        android:minHeight="0dp"
+                        android:paddingStart="12dp"
+                        android:paddingEnd="12dp"
+                        android:text="View"
+                        android:textAllCaps="false"
+                        android:textSize="12sp" />
+
+                    <Button
+                        android:id="@+id/buttonToggleDinner"
+                        android:layout_width="wrap_content"
+                        android:layout_height="40dp"
+                        android:layout_marginStart="6dp"
+                        android:minWidth="0dp"
+                        android:minHeight="0dp"
+                        android:paddingStart="12dp"
+                        android:paddingEnd="12dp"
+                        android:text="Exclude"
+                        android:textAllCaps="false"
+                        android:textSize="12sp" />
+
+                </LinearLayout>
 
             </LinearLayout>
 
@@ -265,17 +358,17 @@
             android:id="@+id/textNoMeals"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="No meals planned for today."
-            android:textAlignment="center"
+            android:layout_marginBottom="20dp"
             android:padding="16dp"
-            android:layout_marginBottom="20dp" />
+            android:text="No meals planned for today."
+            android:textAlignment="center" />
 
         <Button
             android:id="@+id/buttonViewMealPlan"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="View Meal Plan"
-            android:layout_marginBottom="16dp" />
+            android:layout_marginBottom="16dp"
+            android:text="View Meal Plan" />
 
         <Button
             android:id="@+id/buttonViewGroceryList"

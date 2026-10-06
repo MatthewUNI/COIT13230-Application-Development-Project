@@ -13,7 +13,9 @@ import au.edu.cqu.ai_basedsmartmealplanner.R
 import au.edu.cqu.ai_basedsmartmealplanner.ai.MealPlannerViewModel
 import au.edu.cqu.ai_basedsmartmealplanner.ai.MealUiState
 import au.edu.cqu.ai_basedsmartmealplanner.nutrition.NutritionAnalysisEngine
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.util.Locale
 
 class RecipesFragment : Fragment(R.layout.fragment_recipes) {
@@ -142,27 +144,23 @@ class RecipesFragment : Fragment(R.layout.fragment_recipes) {
                                                     R.id.textRecipeInstructions
                                                 )
 
-                                            // Calculate nutrition for this recipe
-                                            val nutrition =
-                                                NutritionAnalysisEngine.analyzeRecipe(
-                                                    recipe
-                                                )
+                                            /*
+                                             * Nutrition is not calculated here.
+                                             * It will only be calculated when
+                                             * the user opens this recipe.
+                                             */
+                                            var nutritionLoaded = false
+                                            var nutritionLoading = false
 
-                                            // Set recipe information
+                                            // Set initial recipe information
                                             textRecipeHeader.text =
                                                 "▼ ${recipe.mealType} - ${recipe.title}"
 
                                             textRecipeCalories.text =
-                                                "Calories: ${nutrition.calories}"
+                                                "Calories: -"
 
                                             textRecipeMacros.text =
-                                                String.format(
-                                                    Locale.ENGLISH,
-                                                    "Protein: %.1fg | Carbs: %.1fg | Fats: %.1fg",
-                                                    nutrition.protein,
-                                                    nutrition.carbs,
-                                                    nutrition.fats
-                                                )
+                                                "Protein: - | Carbs: - | Fats: -"
 
                                             textRecipeIngredients.text =
                                                 recipe.ingredients.joinToString("\n") {
@@ -184,14 +182,80 @@ class RecipesFragment : Fragment(R.layout.fragment_recipes) {
                                                     View.GONE
                                                 ) {
 
+                                                    // Open dropdown
                                                     recipeDetailsContainer.visibility =
                                                         View.VISIBLE
 
                                                     textRecipeHeader.text =
                                                         "▲ ${recipe.mealType} - ${recipe.title}"
 
+                                                    /*
+                                                     * Only calculate nutrition
+                                                     * the first time this recipe
+                                                     * is opened.
+                                                     */
+                                                    if (
+                                                        !nutritionLoaded &&
+                                                        !nutritionLoading
+                                                    ) {
+
+                                                        nutritionLoading = true
+
+                                                        textRecipeCalories.text =
+                                                            "Calories: Calculating..."
+
+                                                        textRecipeMacros.text =
+                                                            "Calculating nutrition..."
+
+                                                        viewLifecycleOwner.lifecycleScope.launch {
+
+                                                            /*
+                                                             * AFCD matching is CPU-heavy.
+                                                             * Run it away from the UI thread.
+                                                             */
+                                                            val nutrition =
+                                                                withContext(Dispatchers.Default) {
+
+                                                                    NutritionAnalysisEngine
+                                                                        .analyzeRecipe(
+                                                                            recipe
+                                                                        )
+                                                                }
+
+                                                            /*
+                                                             * Only update the views if
+                                                             * this Fragment's view still
+                                                             * exists.
+                                                             */
+                                                            if (
+                                                                viewLifecycleOwner.lifecycle
+                                                                    .currentState
+                                                                    .isAtLeast(
+                                                                        Lifecycle.State.INITIALIZED
+                                                                    )
+                                                            ) {
+
+                                                                textRecipeCalories.text =
+                                                                    "Calories: ${nutrition.calories}"
+
+                                                                textRecipeMacros.text =
+                                                                    String.format(
+                                                                        Locale.ENGLISH,
+                                                                        "Protein: %.1fg | Carbs: %.1fg | Fats: %.1fg",
+                                                                        nutrition.protein,
+                                                                        nutrition.carbs,
+                                                                        nutrition.fats
+                                                                    )
+
+                                                                nutritionLoaded = true
+                                                                nutritionLoading = false
+                                                            }
+                                                        }
+                                                    }
+
                                                 } else {
 
+                                                    // Close dropdown
                                                     recipeDetailsContainer.visibility =
                                                         View.GONE
 
@@ -200,7 +264,9 @@ class RecipesFragment : Fragment(R.layout.fragment_recipes) {
                                                 }
                                             }
 
-                                            recipeListContainer.addView(recipeView)
+                                            recipeListContainer.addView(
+                                                recipeView
+                                            )
                                         }
                                     }
                                 }
@@ -210,6 +276,7 @@ class RecipesFragment : Fragment(R.layout.fragment_recipes) {
                         else -> {
 
                             textNoRecipe.visibility = View.VISIBLE
+
                             textNoRecipe.text =
                                 "Generate a meal plan to view recipes."
 

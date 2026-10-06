@@ -70,6 +70,15 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         val buttonViewDinner =
             view.findViewById<Button>(R.id.buttonViewDinner)
 
+        val buttonToggleBreakfast =
+            view.findViewById<Button>(R.id.buttonToggleBreakfast)
+
+        val buttonToggleLunch =
+            view.findViewById<Button>(R.id.buttonToggleLunch)
+
+        val buttonToggleDinner =
+            view.findViewById<Button>(R.id.buttonToggleDinner)
+
         val buttonViewMealPlan =
             view.findViewById<Button>(R.id.buttonViewMealPlan)
 
@@ -89,13 +98,29 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                         nutritionContainer.visibility = View.VISIBLE
                         textNoNutrition.visibility = View.GONE
 
-                        textCalories.text = nutrition.calories.toString()
+                        textCalories.text =
+                            nutrition.calories.toString()
+
                         textProtein.text =
-                            String.format("%.1f g", nutrition.protein)
+                            String.format(
+                                Locale.ENGLISH,
+                                "%.1f g",
+                                nutrition.protein
+                            )
+
                         textCarbs.text =
-                            String.format("%.1f g", nutrition.carbs)
+                            String.format(
+                                Locale.ENGLISH,
+                                "%.1f g",
+                                nutrition.carbs
+                            )
+
                         textFats.text =
-                            String.format("%.1f g", nutrition.fats)
+                            String.format(
+                                Locale.ENGLISH,
+                                "%.1f g",
+                                nutrition.fats
+                            )
 
                     } else {
 
@@ -117,48 +142,84 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
 
                     if (state is MealUiState.Success) {
 
-                        val meals = state.mealPlan.dailyMeals
+                        val meals =
+                            state.mealPlan.dailyMeals
 
-                        val today = SimpleDateFormat(
-                            "EEEE",
-                            Locale.ENGLISH
-                        ).format(Date())
+                        val today =
+                            SimpleDateFormat(
+                                "EEEE",
+                                Locale.ENGLISH
+                            ).format(Date())
 
-                        val breakfast = meals.find { meal ->
-                            meal.day.equals(today, ignoreCase = true) &&
-                                    meal.mealType.equals(
-                                        "Breakfast",
-                                        ignoreCase = true
-                                    )
-                        }
+                        val breakfast =
+                            meals.find { meal ->
+                                meal.day.equals(
+                                    today,
+                                    ignoreCase = true
+                                ) &&
+                                        meal.mealType.equals(
+                                            "Breakfast",
+                                            ignoreCase = true
+                                        )
+                            }
 
-                        val lunch = meals.find { meal ->
-                            meal.day.equals(today, ignoreCase = true) &&
-                                    meal.mealType.equals(
-                                        "Lunch",
-                                        ignoreCase = true
-                                    )
-                        }
+                        val lunch =
+                            meals.find { meal ->
+                                meal.day.equals(
+                                    today,
+                                    ignoreCase = true
+                                ) &&
+                                        meal.mealType.equals(
+                                            "Lunch",
+                                            ignoreCase = true
+                                        )
+                            }
 
-                        val dinner = meals.find { meal ->
-                            meal.day.equals(today, ignoreCase = true) &&
-                                    meal.mealType.equals(
-                                        "Dinner",
-                                        ignoreCase = true
-                                    )
-                        }
+                        val dinner =
+                            meals.find { meal ->
+                                meal.day.equals(
+                                    today,
+                                    ignoreCase = true
+                                ) &&
+                                        meal.mealType.equals(
+                                            "Dinner",
+                                            ignoreCase = true
+                                        )
+                            }
 
                         mealsContainer.visibility = View.VISIBLE
                         textNoMeals.visibility = View.GONE
 
                         textBreakfast.text =
-                            breakfast?.title ?: "Meal not available"
+                            breakfast?.title
+                                ?: "Meal not available"
 
                         textLunch.text =
-                            lunch?.title ?: "Meal not available"
+                            lunch?.title
+                                ?: "Meal not available"
 
                         textDinner.text =
-                            dinner?.title ?: "Meal not available"
+                            dinner?.title
+                                ?: "Meal not available"
+
+                        // Disable actions if a meal is not available.
+                        buttonViewBreakfast.isEnabled =
+                            breakfast != null
+
+                        buttonToggleBreakfast.isEnabled =
+                            breakfast != null
+
+                        buttonViewLunch.isEnabled =
+                            lunch != null
+
+                        buttonToggleLunch.isEnabled =
+                            lunch != null
+
+                        buttonViewDinner.isEnabled =
+                            dinner != null
+
+                        buttonToggleDinner.isEnabled =
+                            dinner != null
 
                     } else {
 
@@ -170,9 +231,108 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         }
 
         /*
+         * Observe which meals are excluded from today's
+         * nutrition calculation.
+         */
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+
+                viewModel.excludedMealTypes.collect { excluded ->
+
+                    val breakfastExcluded =
+                        excluded.any {
+                            it.equals(
+                                "Breakfast",
+                                ignoreCase = true
+                            )
+                        }
+
+                    val lunchExcluded =
+                        excluded.any {
+                            it.equals(
+                                "Lunch",
+                                ignoreCase = true
+                            )
+                        }
+
+                    val dinnerExcluded =
+                        excluded.any {
+                            it.equals(
+                                "Dinner",
+                                ignoreCase = true
+                            )
+                        }
+
+                    // Change button text depending on current state.
+                    buttonToggleBreakfast.text =
+                        if (breakfastExcluded) {
+                            "Include"
+                        } else {
+                            "Exclude"
+                        }
+
+                    buttonToggleLunch.text =
+                        if (lunchExcluded) {
+                            "Include"
+                        } else {
+                            "Exclude"
+                        }
+
+                    buttonToggleDinner.text =
+                        if (dinnerExcluded) {
+                            "Include"
+                        } else {
+                            "Exclude"
+                        }
+
+                    // Fade excluded meals so their state is obvious.
+                    textBreakfast.alpha =
+                        if (breakfastExcluded) {
+                            0.5f
+                        } else {
+                            1.0f
+                        }
+
+                    textLunch.alpha =
+                        if (lunchExcluded) {
+                            0.5f
+                        } else {
+                            1.0f
+                        }
+
+                    textDinner.alpha =
+                        if (dinnerExcluded) {
+                            0.5f
+                        } else {
+                            1.0f
+                        }
+                }
+            }
+        }
+
+        /*
+         * Include / exclude meals from today's nutrition.
+         */
+        buttonToggleBreakfast.setOnClickListener {
+            viewModel.toggleMealExcluded(
+                "Breakfast"
+            )
+        }
+
+        buttonToggleLunch.setOnClickListener {
+            viewModel.toggleMealExcluded(
+                "Lunch"
+            )
+        }
+
+        buttonToggleDinner.setOnClickListener {
+            viewModel.toggleMealExcluded(
+                "Dinner"
+            )
+        }
+
+        /*
          * Open the Recipes screen.
-         * RecipesFragment now reads recipes directly from the
-         * shared MealPlannerViewModel.
          */
         buttonViewBreakfast.setOnClickListener {
             parentFragmentManager.beginTransaction()
@@ -201,6 +361,9 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                 .commit()
         }
 
+        /*
+         * Open the full meal plan.
+         */
         buttonViewMealPlan.setOnClickListener {
             parentFragmentManager.beginTransaction()
                 .replace(
@@ -210,6 +373,9 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                 .commit()
         }
 
+        /*
+         * Open the grocery list.
+         */
         buttonViewGroceryList.setOnClickListener {
             parentFragmentManager.beginTransaction()
                 .replace(
