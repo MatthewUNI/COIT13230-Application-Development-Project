@@ -35,63 +35,100 @@ class MealPlanFragment : Fragment(R.layout.fragment_meal_plan) {
         val mealContainer = view.findViewById<LinearLayout>(R.id.mealPlanContainer)
         val rvSavedPlans = view.findViewById<RecyclerView>(R.id.recyclerViewSavedPlans)
 
-        savedPlansAdapter = SavedPlansAdapter { selectedPlan ->
-            viewModel.restoreSavedPlan(selectedPlan)
-            Toast.makeText(requireContext(), "Loaded: ${selectedPlan.title}", Toast.LENGTH_SHORT).show()
-        }
+        savedPlansAdapter = SavedPlansAdapter(
+            onPlanClicked = { selectedPlan ->
+                viewModel.restoreSavedPlan(selectedPlan)
+                Toast.makeText(requireContext(), "Loaded: ${selectedPlan.title}", Toast.LENGTH_SHORT).show()
+            },
+            onDeleteClicked = { planToDelete ->
+                viewModel.deleteSavedPlan(planToDelete)
+            }
+        )
 
         rvSavedPlans.layoutManager = LinearLayoutManager(requireContext())
         rvSavedPlans.adapter = savedPlansAdapter
 
         btnGenerate.setOnClickListener {
+            val currentIngredientCount = viewModel.profileManager.getProfile().availableIngredients.size
+
             val dialog = android.app.AlertDialog.Builder(requireContext()).create()
 
+            // Create a custom rounded background for the dialog itself
             val layout = LinearLayout(requireContext()).apply {
                 orientation = LinearLayout.VERTICAL
-                setPadding(64, 64, 64, 32)
+                setPadding(72, 72, 72, 48)
+                background = android.graphics.drawable.GradientDrawable().apply {
+                    setColor(android.graphics.Color.WHITE)
+                    cornerRadius = 64f // Rounds the corners of the white dialog box
+                }
             }
 
             val title = TextView(requireContext()).apply {
                 text = "Choose Generation Mode"
-                textSize = 20f
+                textSize = 22f
                 setTypeface(null, android.graphics.Typeface.BOLD)
-                setPadding(0, 0, 0, 48)
+                setTextColor(android.graphics.Color.parseColor("#1C1B1F"))
+                textAlignment = View.TEXT_ALIGNMENT_CENTER
+                setPadding(0, 0, 0, 64)
             }
 
-            val btnPantry = Button(requireContext()).apply {
-                text = "PANTRY ONLY\n(Use only what I have, perfect for skipping the store)"
+            // MaterialButton gives us the beautiful corner radius and elevation
+            val btnPantry = com.google.android.material.button.MaterialButton(requireContext()).apply {
                 isAllCaps = false
+                cornerRadius = 40 // Perfectly rounded pill shape
+                backgroundTintList = android.content.res.ColorStateList.valueOf(android.graphics.Color.parseColor("#588064"))
+                setTextColor(android.graphics.Color.WHITE)
                 textAlignment = View.TEXT_ALIGNMENT_CENTER
-                setPadding(32, 24, 32, 24)
+                setPadding(32, 40, 32, 40)
+
+                // Format text: Bold title, smaller description
+                val buttonText = android.text.SpannableString("PANTRY ONLY\nUse only what I have, perfect for skipping the store")
+                buttonText.setSpan(android.text.style.StyleSpan(android.graphics.Typeface.BOLD), 0, 11, android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+                buttonText.setSpan(android.text.style.RelativeSizeSpan(0.8f), 11, buttonText.length, android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+                text = buttonText
+
                 setOnClickListener {
-                    viewModel.generateMealPlan(isPantryOnly = true)
-                    dialog.dismiss()
+                    if (currentIngredientCount < 5) {
+                        Toast.makeText(requireContext(), "You need at least 5 ingredients in your profile to use Pantry Only mode!", Toast.LENGTH_LONG).show()
+                    } else {
+                        viewModel.generateMealPlan(isPantryOnly = true)
+                        dialog.dismiss()
+                    }
                 }
             }
 
             val spacer = View(requireContext()).apply {
-                layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 32)
+                layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 40)
             }
 
-            val btnFull = Button(requireContext()).apply {
-                text = "FULL MENU\n(Best recipes using pantry as base, add missing items to grocery list)"
+            val btnFull = com.google.android.material.button.MaterialButton(requireContext()).apply {
                 isAllCaps = false
+                cornerRadius = 40
+                backgroundTintList = android.content.res.ColorStateList.valueOf(android.graphics.Color.parseColor("#588064"))
+                setTextColor(android.graphics.Color.WHITE)
                 textAlignment = View.TEXT_ALIGNMENT_CENTER
-                setPadding(32, 24, 32, 24)
+                setPadding(32, 40, 32, 40)
+
+                val buttonText2 = android.text.SpannableString("FULL MENU\nBest recipes using pantry as base, add missing items to grocery list")
+                buttonText2.setSpan(android.text.style.StyleSpan(android.graphics.Typeface.BOLD), 0, 9, android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+                buttonText2.setSpan(android.text.style.RelativeSizeSpan(0.8f), 9, buttonText2.length, android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+                text = buttonText2
+
                 setOnClickListener {
                     viewModel.generateMealPlan(isPantryOnly = false)
                     dialog.dismiss()
                 }
             }
 
-            val btnCancel = Button(requireContext(), null, android.R.attr.borderlessButtonStyle).apply {
+            val btnCancel = android.widget.Button(requireContext(), null, android.R.attr.borderlessButtonStyle).apply {
                 text = "CANCEL"
+                setTextColor(android.graphics.Color.parseColor("#588064"))
                 setOnClickListener { dialog.dismiss() }
                 layoutParams = LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.WRAP_CONTENT,
                     LinearLayout.LayoutParams.WRAP_CONTENT
                 ).apply {
-                    gravity = android.view.Gravity.END
+                    gravity = android.view.Gravity.CENTER
                     topMargin = 32
                 }
             }
@@ -103,12 +140,30 @@ class MealPlanFragment : Fragment(R.layout.fragment_meal_plan) {
             layout.addView(btnCancel)
 
             dialog.setView(layout)
+
+            // This makes the sharp square corners of the default dialog invisible,
+            // letting our beautiful rounded layout shine through.
+            dialog.window?.setBackgroundDrawable(android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT))
+
             dialog.show()
         }
 
         btnSave.setOnClickListener {
-            viewModel.saveCurrentMealPlan()
-            Toast.makeText(requireContext(), "Meal plan saved to history!", Toast.LENGTH_SHORT).show()
+            val input = android.widget.EditText(requireContext()).apply {
+                hint = "e.g., Pre-Exam Week Prep"
+                setPadding(48, 32, 48, 32)
+            }
+
+            android.app.AlertDialog.Builder(requireContext())
+                .setTitle("Save Meal Plan")
+                .setView(input)
+                .setPositiveButton("Save") { _, _ ->
+                    val title = if (input.text.isNotBlank()) input.text.toString() else "Saved Meal Plan"
+                    viewModel.saveCurrentMealPlan(title)
+                    Toast.makeText(requireContext(), "Meal plan saved!", Toast.LENGTH_SHORT).show()
+                }
+                .setNegativeButton("Cancel", null)
+                .show()
         }
 
         viewLifecycleOwner.lifecycleScope.launch {

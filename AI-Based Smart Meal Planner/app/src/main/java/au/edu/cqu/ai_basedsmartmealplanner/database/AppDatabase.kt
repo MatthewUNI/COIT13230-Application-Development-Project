@@ -3,6 +3,7 @@ package au.edu.cqu.ai_basedsmartmealplanner.database
 import android.content.Context
 import androidx.room.Dao
 import androidx.room.Database
+import androidx.room.Delete
 import androidx.room.Entity
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
@@ -30,6 +31,9 @@ interface MealPlanDao {
 
     @Query("DELETE FROM saved_meal_plans")
     fun clearAll(): Int
+
+    @Delete
+    fun deleteMealPlan(plan: SavedMealPlanEntity)
 }
 
 @Database(
@@ -71,3 +75,4 @@ abstract class AppDatabase : RoomDatabase() {
         }
     }
 }
+

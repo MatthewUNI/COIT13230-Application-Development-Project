@@ -109,21 +109,16 @@ class MealPlannerViewModel(
         _excludedMealTypes.value = emptySet()
     }
 
-    fun saveCurrentMealPlan() {
+    fun saveCurrentMealPlan(planName: String) {
         val currentState = _uiState.value
-
         if (currentState is MealUiState.Success) {
             viewModelScope.launch(Dispatchers.IO) {
-
                 val entity = SavedMealPlanEntity(
-                    title = "Meal Plan - ${System.currentTimeMillis()}",
+                    title = planName,
                     planJson = gson.toJson(currentState.mealPlan)
                 )
-
                 mealPlanDao.insertMealPlan(entity)
-
-                _savedPlans.value =
-                    mealPlanDao.getAllSavedMealPlans()
+                loadSavedPlans()
             }
         }
     }
@@ -132,6 +127,13 @@ class MealPlannerViewModel(
         viewModelScope.launch(Dispatchers.IO) {
             _savedPlans.value =
                 mealPlanDao.getAllSavedMealPlans()
+        }
+    }
+
+    fun deleteSavedPlan(entity: SavedMealPlanEntity) {
+        viewModelScope.launch(Dispatchers.IO) {
+            mealPlanDao.deleteMealPlan(entity)
+            loadSavedPlans()
         }
     }
 
