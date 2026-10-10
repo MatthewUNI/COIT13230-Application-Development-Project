@@ -48,6 +48,8 @@ class AfcdNutritionDataSource(
             .replace("ground chicken", "chicken mince")
             .replace("ground pork", "pork mince")
             .replace("whole milk", "full cream milk")
+            .replace("whole wheat croutons", "wholemeal bread toasted")
+            .replace("wholemeal croutons", "wholemeal bread toasted")
             .replace("whole wheat bread", "wholemeal bread")
             .replace("whole wheat", "wholemeal")
             .replace("low-fat cottage cheese", "cottage cheese")
@@ -68,6 +70,9 @@ class AfcdNutritionDataSource(
             .replace("pineapple chunks", "pineapple")
             .replace("pineapple pieces", "pineapple")
             .replace("diced pineapple", "pineapple")
+            .replace("white fish fillet", "blue grenadier hoki fillet")
+            .replace("white fish", "blue grenadier hoki")
+
 
         if (foodRecords.isEmpty()) {
             return null
@@ -168,7 +173,11 @@ class AfcdNutritionDataSource(
             "oil",
             "juice",
             "powder",
-            "flour"
+            "flour",
+            "starch",
+            "dried",
+            "dehydrated",
+            "cider"
         )
 
         fun normaliseWord(word: String): String {
