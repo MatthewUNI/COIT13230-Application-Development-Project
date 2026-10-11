@@ -2,6 +2,7 @@ package au.edu.cqu.ai_basedsmartmealplanner
 
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.fragment.app.Fragment
 import au.edu.cqu.ai_basedsmartmealplanner.nutrition.NutritionAnalysisEngine
 import au.edu.cqu.ai_basedsmartmealplanner.ui.GroceryListFragment
@@ -15,6 +16,8 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
 
         NutritionAnalysisEngine.initialize(applicationContext)
 
