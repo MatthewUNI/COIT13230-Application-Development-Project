@@ -255,6 +255,17 @@ class MealPlannerViewModel(
                         "No specific food preferences"
                     }
 
+
+                val caloriesPerKg = when (profile.goalType.lowercase()) {
+                    "lose" -> 23
+                    "gain" -> 37
+                    else -> 30
+                }
+
+                val dailyCalorieTarget =
+                    (profile.currentWeight * caloriesPerKg).toInt()
+
+
                 val goalGuidance =
                     when (profile.goalType.lowercase()) {
 
@@ -293,17 +304,22 @@ class MealPlannerViewModel(
                         STRICT PANTRY-ONLY RULE:
                         You MUST ONLY use the ingredients listed in the user's 'Available ingredients'.
                         Do NOT suggest any recipes requiring ingredients outside of this exact list.
-                        You may assume the user has basic staples like water, salt, pepper, and cooking oil.
+                        You may assume the user has basic staples like water, salt, pepper, spices, and cooking oil.
                         """.trimIndent()
 
                     } else {
-
                         """
                         INGREDIENT USAGE:
-                        Prioritize the user's 'Available ingredients' to reduce waste.
-                        You may include recipes that require additional ingredients, which will be added to the user's grocery list.
+                        - The user's 'Available ingredients' are optional, not mandatory.
+                        - Use available ingredients only when they naturally fit a meal.
+                        - Do NOT force available ingredients into every meal.
+                        - Do NOT repeatedly use the same available ingredient across most meals.
+                        - Generate a varied meal plan using a wide range of ingredients.
+                        - You may freely include additional ingredients, which will be added to the user's grocery list.
+                        - Prioritize meal variety, nutritional balance, dietary requirements, and food preferences.
                         """.trimIndent()
                     }
+
 
                 val promptText = """
                     You are a nutritional meal planner.
@@ -317,8 +333,22 @@ class MealPlannerViewModel(
                     Food preferences: $preferenceText
                     Available ingredients: $ingredientList
 
+                                        
                     WEIGHT GOAL:
                     $goalGuidance
+                    
+                                 
+                    DAILY CALORIE TARGET:
+                    - The user's estimated daily calorie target is $dailyCalorieTarget kcal.
+                    - Generate Breakfast, Lunch, and Dinner so their combined calories are approximately equal to the daily target.
+                    - Aim for each day's total calories to be within 10% of the daily target.
+                    - Distribute approximately 25% of daily calories to Breakfast, 35% to Lunch, and 40% to Dinner.
+                    - Adjust ingredient quantities and portion sizes to meet these targets.
+                    - Ensure each meal contains realistic portions for one adult.
+                    - If a day's meals are below the target, increase suitable ingredient quantities or include additional nutritious ingredients.
+                    - Calculate each meal's estimated calories based on its ingredient quantities, including cooking oils, sauces, and other additions.
+                    - Do NOT increase the reported calorie values without increasing the actual ingredient quantities.
+                    - Check the combined calories for each day before returning the meal plan.
 
                     MACRONUTRIENT GUIDANCE:
                     - Treat the macronutrient percentages above as percentages of total calories, not percentages by weight.
@@ -344,6 +374,41 @@ class MealPlannerViewModel(
                     - Eggs may be given as a whole number.
                     - Do NOT use cups, tablespoons, teaspoons, ounces, cans, slices, handfuls, or bunches. Convert to grams/ml.
                     - Do NOT use vague quantities such as "to taste".
+                    
+                   
+                    INGREDIENT NAMING REQUIREMENTS:
+                    - Use short, simple, standard ingredient names suitable for matching against the Australian Food Composition Database (AFCD).
+                    - Simplify unnecessary descriptions, but NEVER remove words that affect the ingredient's identity or nutritional values.
+                    - Preserve important nutritional characteristics such as skim, low-fat, reduced-fat, full-fat, lean, extra-lean, raw, uncooked, dried, canned, and whole.
+                    - Distinguish between different varieties of the same food when their nutritional values differ significantly.
+                    - For milk, distinguish between skim milk, reduced-fat milk, full-cream milk, and plant-based milk.
+                    - For eggs, distinguish between whole eggs, egg whites, and egg yolks.
+                    - For meat, distinguish between lean and regular cuts.
+                    - For dairy products, distinguish between regular, low-fat, and fat-free varieties.
+                    - For oils and spreads, preserve the specific food type, such as olive oil, butter, peanut butter, and margarine.
+                    - For flour and grains, preserve important distinctions such as oat flour, wheat flour, wholemeal flour, and rolled oats.
+                    - For canned foods, preserve the packing medium when it significantly affects nutrition, such as tuna in oil versus tuna in springwater.
+                    - Remove unnecessary preparation words such as chopped, diced, sliced, crumbled, peeled, shredded, cubed, and grated unless they identify a distinct food product.
+                    - Put preparation details in the cooking instructions instead of the ingredient list.
+                    - Use common Australian food terminology such as "beef mince", "wholemeal bread", and "yoghurt".
+                    - Never replace an ingredient with a nutritionally different food just to simplify its name.
+                    - Use consistent ingredient names throughout the generated meal plan.
+                    
+                  
+                    INGREDIENT WEIGHT AND COOKING STATE REQUIREMENTS:
+                    - Always specify rice quantities using UNCOOKED weight.
+                    - For all varieties of rice, including white rice and brown rice, use uncooked quantities only.
+                    - Explicitly include "uncooked" in every rice ingredient name.
+                    - For example, use "50g uncooked white rice" instead of "150g cooked white rice".
+                    - For example, use "60g uncooked brown rice" instead of "180g cooked brown rice".
+                    - Never use cooked rice weights in the ingredient list.
+                    - For all other ingredients, use the weight appropriate to how the ingredient is used in the recipe.
+                    - For pasta, quinoa, lentils, and noodles, clearly specify whether the quantity is cooked or uncooked.
+                    - For meat, poultry, fish, and vegetables, use raw weights when the ingredient is prepared from raw.
+                    - For canned and ready-to-eat foods, use their weight as purchased or drained, as appropriate.
+                    - Ensure ingredient quantities correspond to the specified cooking state.
+                    - Keep cooking methods and preparation details in the recipe instructions.
+                    - Never mix cooked ingredient quantities with uncooked nutritional values.
 
                     DIETARY REQUIREMENTS:
                     - Strictly follow all listed dietary requirements.

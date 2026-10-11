@@ -47,7 +47,10 @@ class AfcdNutritionDataSource(
             .replace("turkey mince", "chicken mince")
             .replace("ground chicken", "chicken mince")
             .replace("ground pork", "pork mince")
-            .replace("whole milk", "full cream milk")
+            .replace("full-cream milk", "milk cow fluid regular fat")
+            .replace("full cream milk", "milk cow fluid regular fat")
+            .replace("whole milk", "milk cow fluid regular fat")
+            .replace("wheat flour", "flour wheat white plain")
             .replace("whole wheat croutons", "wholemeal bread toasted")
             .replace("wholemeal croutons", "wholemeal bread toasted")
             .replace("whole wheat bread", "wholemeal bread")
@@ -72,6 +75,36 @@ class AfcdNutritionDataSource(
             .replace("diced pineapple", "pineapple")
             .replace("white fish fillet", "blue grenadier hoki fillet")
             .replace("white fish", "blue grenadier hoki")
+            .replace("skimmed milk", "skim milk")
+            .replace("oat flour", "oats rolled uncooked")
+            .replace("low-fat feta cheese", "cheese fetta feta")
+            .replace("low fat feta cheese", "cheese fetta feta")
+            .replace("reduced fat feta cheese", "cheese fetta feta")
+            .replace("firm tofu, crumbled", "tofu firm")
+            .replace("firm tofu crumbled", "tofu firm")
+            .replace("vegan protein powder", "protein powder hemp seed based")
+            .replace("plant based protein powder", "protein powder hemp seed based")
+            .replace("unsweetened almond milk", "almond beverage no added sugar")
+            .replace("sweetened almond milk", "almond beverage added sugar")
+            .replace("almond milk", "almond beverage")
+            .replace("chia seeds", "seed chia dried")
+            .replace("chia seed", "seed chia dried")
+            .replace("hokkien noodles", "noodle wheat fresh soaked drained")
+            .replace("hokkien noodle", "noodle wheat fresh soaked drained")
+            .replace("wholemeal flatbread", "bread from wholemeal flour")
+            .replace("whole wheat flatbread", "bread from wholemeal flour")
+            .replace("tempeh", "tofu soy bean curd firm")
+            .replace("soy milk", "soy beverage")
+            .replace("soya milk", "soy beverage")
+            .replace("uncooked pasta", "pasta white wheat flour dry")
+            .replace("canned tuna in spring water", "canned tuna")
+            .replace("tuna in spring water", "canned tuna")
+            .replace("tuna in springwater", "canned tuna")
+            .replace("low-fat yoghurt", "yoghurt natural reduced fat")
+            .replace("low fat yoghurt", "yoghurt natural reduced fat")
+            .replace("low-fat yogurt", "yoghurt natural reduced fat")
+            .replace("low fat yogurt", "yoghurt natural reduced fat")
+
 
 
         if (foodRecords.isEmpty()) {
@@ -177,7 +210,9 @@ class AfcdNutritionDataSource(
             "starch",
             "dried",
             "dehydrated",
-            "cider"
+            "cider",
+            "chocolate",
+            "baked"
         )
 
         fun normaliseWord(word: String): String {
